@@ -31,10 +31,11 @@ public:
 	/*
 	Starts and runs the inifnite circBuffer-loop
 	*/
-	void runCircBuffer();
+	void runCircBuffer(bool isProducer);
 	/*
 	push function used by the producer. The producer attempts to write data to the 
-	FileMap. length variable used for... ?
+	FileMap. Specifically it tries to write a message and append it to the Shared Memory (FileMap)
+
 	*/
 	bool push(const void* msg, size_t length);
 	/*
