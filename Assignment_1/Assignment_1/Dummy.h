@@ -11,6 +11,7 @@ class CircBufferFixed
 private:
 	// your private stuff,
 	// implementation details, etc.
+
 	struct Header
 	{
 		size_t id;

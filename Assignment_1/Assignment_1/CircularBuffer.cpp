@@ -2,43 +2,80 @@
 
 void * circularBuffer::makeMessage()
 {
-	struct messageStruct
-	{
-		messageHeader headero;
-		const char* charoo[20];
-	};
-	void* pointoro = new messageStruct;
-	messageStruct* lol = (messageStruct*)pointoro;
-	lol->charoo[0] = "O";
-	lol->charoo[1] = "R";
-	lol->charoo[2] = "C";
-	lol->headero.id = 1;
-	lol->headero.length = sizeof(lol->charoo);
-	lol->headero.padding = 256 - lol->headero.length - sizeof(lol->headero);
-	pointoro = (void*)lol;
-	return pointoro;
+	messageStruct* lol = new messageStruct;
+	char popo[] = "kkkkkkkkk1";
+	int lengthi = strlen(popo)+1;
+	memcpy(lol->charoo, popo, lengthi);
+	lol->header.id = 1;
+	lol->header.length = strlen(lol->charoo)+1;
+	lol->header.padding = 256 - lol->header.length - sizeof(lol->header);
+
+	return (void*)lol;
 }
 
-void circularBuffer::initCircBuffer(LPCWSTR buffName, const size_t & buffSize, const bool & isProducer, const size_t & chunkSize)
+void circularBuffer::initCircBuffer(LPCWSTR buffName, const size_t & buffSize, const int& role, const size_t & chunkSize, int& delay,
+	int& numMessages, int& msgSizeMode)
 {
+	this->buffName = buffName;
+	this->buffSize = &buffSize;
+	this->role = role;
+	this->chunkSize = &chunkSize;
+	this->delay = delay;
+	this->numMessages = numMessages;
 }
 
-void circularBuffer::runCircBuffer(bool isProducer)
+void circularBuffer::runCircBuffer()
 {
-	if (isProducer)
+	while (role == PRODUCER)
 	{
-		//Producer do this
-		while (true)
-		{
-			push(NULL, 90);
-		}
+		/*
+		Where to test alignment of message?
+		the producer's job?
+
+		Maximum message size is 1/4 of buffersize.
+		But as long as the message is aligned to at least 256 bits
+		it's considered "aligned". So make it a multiple of 256.
+
+		How do you do that?
+		messagesize % 256
+		256 % 256 = 0
+		512 % 256 = 0
+		511 % 256 = 255 --> alignment is then current size of data + difference between 256 and 255, which is 1
+		1025 % 256 = 1 --> difference between 256 and 1 is 255. "Add" 255 as padding
+		*/
+		void* msg = makeMessage();
+		//Try to push msg
 	}
-	else {
-		//Consumer do this
-		while (true)
+	while (role == CONSUMER)
+	{
+		void* messageGot = makeMessage();
+		messageStruct message;
+		memcpy(&message, messageGot, sizeof(messageHeader));
+		int readSize = sizeof(messageHeader) + message.header.length;
+		printf("%d \n", readSize);
+		memcpy(&message, messageGot, readSize);
+		printf("%s \n", message.charoo);
+		
+
+		char* msg;
+		size_t consumerPile;
+		size_t length;
+
+		/*while (true)
 		{
-			//pop(NULL, (size_t)90);
-		}
+			if(consumerPile == 0)
+			{
+				if (pop(msg, length))
+				{
+					break;
+				}
+				else
+				{
+					Sleep(SLEEPTIME);
+				}
+			}
+		}*/
+		
 	}
 }
 
