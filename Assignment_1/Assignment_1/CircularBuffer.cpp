@@ -22,6 +22,26 @@ void circularBuffer::initCircBuffer(LPCWSTR buffName, const size_t & buffSize, c
 	this->chunkSize = &chunkSize;
 	this->delay = delay;
 	this->numMessages = numMessages;
+
+	//Create file map here for messages
+	//WOLOLO
+
+	//Create another file map here for shared variables like "totalmemorysteps"
+	int memorySteps = buffSize / chunkSize;
+	//Everyone knows this variable. Only producer changes it
+	int headCurrstep = 0;
+	//Local currStep to each consumer
+	int localCurrStep = 0;
+	//Local oldDiff to each consumer
+	int localOldDiff = 0;
+	//Local diffSteps for each consumer
+	int localDiffSteps;
+	//every consumer affects this. 
+	//if(headCurrstep - tailCurrstep < abs(tailCurrStep)): diffSteps = headCurrstep - tailCurrstep
+	int diffSteps = 0; //if negative head is behind tail, if positive head is in front of tail
+	//This variable determines behaviour if diffSteps == 0
+	//B4 a new diffSteps is assigned, do oldDiffSteps = diffSteps
+	int oldDiffSteps = 0;
 }
 
 void circularBuffer::runCircBuffer()

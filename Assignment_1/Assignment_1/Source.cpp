@@ -12,9 +12,13 @@ int main(int argc, char* argv[]) {
 	argv[3]; //Size of filemap in megabytes, NOT bytes
 	argv[4]; //number of messages to produce and consume. Use this to loop through the buffer
 	argv[5]; //random || msgSize random indicates that message size can vary. msgSize indicates that all messages be of same size
-	
+	//convert FileMap-size to bytes
+	//Count = "number of 256 byte steps" inside of that memory space.
+	//Count is shared between processes. Head keeps track of the current "Count-step" it's on
+	//Tail only makes sure that it doesn't read from the same Count-step as the head
 	int delay = atoi(argv[2]);
-	int fileMapSize = atoi(argv[3]);
+	size_t fileMapSize = atoi(argv[3]); 
+	fileMapSize = fileMapSize << 20; //converts to bytes
 	int numMessages = atoi(argv[4]);
 	int role;
 	int msgSizeMode;
