@@ -144,12 +144,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CircularBuffer.cpp" />
+    <ClCompile Include="Consumer.cpp" />
     <ClCompile Include="Dummy.cpp" />
+    <ClCompile Include="Producer.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CircularBuffer.h" />
+    <ClInclude Include="Consumer.h" />
     <ClInclude Include="Dummy.h" />
+    <ClInclude Include="Producer.h" />
     <ClInclude Include="StackExchange.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -3,9 +3,16 @@
 #include <iostream>
 #include <vector>
 #include "CircularBuffer.h"
+#include "Consumer.h"
+#include "Producer.h"
 #include <time.h> //use time as a kernel for the rand() function. 
 using namespace std;
-
+enum {
+	PRODUCER = 0,
+	CONSUMER = 1,
+	RANDOM = 0,
+	MSGSIZE = 1
+};
 int main(int argc, char* argv[]) {
 	argv[1]; //producer || consumer
 	argv[2]; //delay in milliseconds
@@ -22,14 +29,15 @@ int main(int argc, char* argv[]) {
 	int numMessages = atoi(argv[4]);
 	int role;
 	int msgSizeMode;
+	size_t maxMsgSize = fileMapSize / 4;
 	//check if this executable is a producer or a consumer
 	if (strcmp("producer", argv[1]) == 0)
 	{
-		role = circularBuffer::PRODUCER;
+		role = PRODUCER;
 	}
 	else if (strcmp("consumer", argv[1]) == 0)
 	{
-		role = circularBuffer::CONSUMER;
+		role = CONSUMER;
 	}
 	else {
 		LPCWSTR error = TEXT("argv[1] doesn't supply a valid string");
@@ -38,11 +46,12 @@ int main(int argc, char* argv[]) {
 	}
 	if (strcmp("random", argv[5]) == 0)
 	{
-		msgSizeMode = circularBuffer::RANDOM;
+		msgSizeMode = RANDOM;
 	}
-	else if (strcmp("msgSize", argv[5]) == 0)
+	else if (atoi(argv[5]) < (fileMapSize / 4))
 	{
-		msgSizeMode = circularBuffer::MSGSIZE;
+		msgSizeMode = MSGSIZE;
+		maxMsgSize = fileMapSize / 4;
 	}
 	else {
 		LPCWSTR error = TEXT("argv[5] doesn't supply a valid string");
@@ -53,9 +62,19 @@ int main(int argc, char* argv[]) {
 
 	circularBuffer asdf;
 	LPCWSTR name = TEXT("Buffero" );
-
-	asdf.initCircBuffer(name, fileMapSize, role, fileMapSize/4, delay, numMessages, msgSizeMode);
-	asdf.runCircBuffer();
+	asdf.initCircBuffer(name, fileMapSize, role, 256);
+	if (role == PRODUCER)
+	{
+		int messageAlignment = 256;
+		Producer producer = Producer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment);
+		producer.runProducer(asdf);
+	}
+	if (role == CONSUMER)
+	{
+		int messageAlignment = 256;
+		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment);
+		consumer.runConsumer(asdf);
+	}
 	//CreateFile(TEXT("Shared"), GENERIC_READ | GENERIC_WRITE, )
 	//The first time a specific FileMap is created, it is created. 
 	//If you attempt to create the file map again you will only 
