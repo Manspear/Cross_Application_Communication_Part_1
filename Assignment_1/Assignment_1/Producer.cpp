@@ -4,7 +4,7 @@ Producer::Producer()
 {
 }
 
-Producer::Producer(int& delay, int& numMessages, size_t& maxMsgSize, size_t& buffSize, int& chunkSize)
+Producer::Producer(int& delay, int& numMessages, size_t& maxMsgSize, size_t& buffSize, int& chunkSize, LPCWSTR varBuffName)
 {
 	this->delay = delay;
 	this->requestedMessages = numMessages;
@@ -31,8 +31,8 @@ void * Producer::makeMessage()
 	int lengthi = strlen(popo) + 1;
 	memcpy(lol->message, popo, lengthi);
 	lol->header.id = 1;
-	lol->header.length = strlen(lol->message) + 1;
-	lol->header.padding = 256 - lol->header.length - sizeof(lol->header);
+	lol->header.length = sizeof(messageHeader) + strlen(lol->message) + 1;
+	//lol->header.padding = 256 - lol->header.length;
 
 	return (void*)lol;
 }

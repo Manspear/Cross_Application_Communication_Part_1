@@ -6,6 +6,7 @@
 #include "Consumer.h"
 #include "Producer.h"
 #include <time.h> //use time as a kernel for the rand() function. 
+#define CHUNKSIZE 256
 using namespace std;
 enum {
 	PRODUCER = 0,
@@ -14,11 +15,11 @@ enum {
 	MSGSIZE = 1
 };
 int main(int argc, char* argv[]) {
-	argv[1]; //producer || consumer
-	argv[2]; //delay in milliseconds
-	argv[3]; //Size of filemap in megabytes, NOT bytes
-	argv[4]; //number of messages to produce and consume. Use this to loop through the buffer
-	argv[5]; //random || msgSize random indicates that message size can vary. msgSize indicates that all messages be of same size
+	//argv[1]; producer || consumer
+	//argv[2]; delay in milliseconds
+	//argv[3]; Size of filemap in megabytes, NOT bytes
+	//argv[4]; number of messages to produce and consume. Use this to loop through the buffer
+	//argv[5]; random || msgSize random indicates that message size can vary. msgSize indicates that all messages be of same size
 	//convert FileMap-size to bytes
 	//Count = "number of 256 byte steps" inside of that memory space.
 	//Count is shared between processes. Head keeps track of the current "Count-step" it's on
@@ -59,21 +60,21 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-
-	circularBuffer asdf;
-	LPCWSTR name = TEXT("Buffero" );
-	asdf.initCircBuffer(name, fileMapSize, role, 256);
+	circularBuffer cirB;
+	LPCWSTR msgBuffName = TEXT("MessageBuffer" );
+	LPCWSTR varBuffName = TEXT("VarBuffer");
+	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName);
 	if (role == PRODUCER)
 	{
 		int messageAlignment = 256;
-		Producer producer = Producer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment);
-		producer.runProducer(asdf);
+		Producer producer = Producer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment, varBuffName);
+		producer.runProducer(cirB);
 	}
 	if (role == CONSUMER)
 	{
 		int messageAlignment = 256;
-		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment);
-		consumer.runConsumer(asdf);
+		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment, varBuffName);
+		consumer.runConsumer(cirB);
 	}
 	//CreateFile(TEXT("Shared"), GENERIC_READ | GENERIC_WRITE, )
 	//The first time a specific FileMap is created, it is created. 

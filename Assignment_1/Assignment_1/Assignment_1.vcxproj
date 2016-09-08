@@ -153,6 +153,7 @@
     <ClInclude Include="CircularBuffer.h" />
     <ClInclude Include="Consumer.h" />
     <ClInclude Include="Dummy.h" />
+    <ClInclude Include="FileMapStructs.h" />
     <ClInclude Include="Producer.h" />
     <ClInclude Include="StackExchange.h" />
   </ItemGroup>

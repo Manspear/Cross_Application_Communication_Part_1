@@ -2,36 +2,15 @@
 
 void Consumer::runConsumer(circularBuffer& buffInst)
 {
-	while (true)
+	while (messageCount < requestedMessages)
 	{
-		/*void* messageGot = makeMessage();
-		messageStruct message;
-		memcpy(&message, messageGot, sizeof(messageHeader));
-		int readSize = sizeof(messageHeader) + message.header.length;
-		printf("%d \n", readSize);
-		memcpy(&message, messageGot, readSize);
-		printf("%s \n", message.message);
-
-
-		char* msg;
-		size_t consumerPile;
-		size_t length;*/
-
-		/*while (true)
+		char* msg = nullptr;
+		size_t length;
+		while (!buffInst.pop(msg, length))
 		{
-		if(consumerPile == 0)
-		{
-		if (pop(msg, length))
-		{
-		break;
+			Sleep(delay);
 		}
-		else
-		{
-		Sleep(SLEEPTIME);
-		}
-		}
-		}*/
-
+		messageCount++;
 	}
 }
 
@@ -39,7 +18,7 @@ Consumer::Consumer()
 {
 }
 
-Consumer::Consumer(int & delay, int & numMessages, size_t & maxMsgSize, size_t & buffSize, int & chunkSize)
+Consumer::Consumer(int & delay, int & numMessages, size_t & maxMsgSize, size_t & buffSize, int & chunkSize, LPCWSTR varBuffName)
 {
 	this->delay = delay;
 	this->requestedMessages = numMessages;

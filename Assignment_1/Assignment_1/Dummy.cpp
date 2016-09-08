@@ -1,6 +1,6 @@
 #include "Dummy.h"
 
-CircBufferFixed::CircBufferFixed(LPCWSTR buffName, const size_t & buffSize, const bool & isProducer, const size_t & chunkSize)
+CircBufferFixed::CircBufferFixed(LPCWSTR msgBuffName, const size_t & buffSize, const bool & isProducer, const size_t & chunkSize)
 {
 }
 

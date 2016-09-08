@@ -23,7 +23,7 @@ private:
 public:
 	// Constructor
 	CircBufferFixed(
-		LPCWSTR buffName,          // unique name
+		LPCWSTR msgBuffName,          // unique name
 		const size_t& buffSize,    // size of the whole filemap
 		const bool& isProducer,    // is this buffer going to be used as producer
 		const size_t& chunkSize);  // round up messages to multiple of this.

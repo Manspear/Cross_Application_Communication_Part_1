@@ -3,13 +3,20 @@
 #include <stdlib.h>
 #include <cstdio>
 #include <iostream>
+#include <vector>
+#include "FileMapStructs.h"
 class circularBuffer
 {
 private:
-	LPCWSTR buffName;
+	LPCWSTR msgBuffName;
 	const size_t * buffSize;
 	int role;
 	const size_t * chunkSize;
+
+	HANDLE msgFileMap;
+	char* msgBuff;
+	HANDLE varFileMap;
+	char* varBuff;
 	
 public:
 	size_t sharedMemSize;
@@ -20,11 +27,15 @@ public:
 	role here is (for the moment) unneccesary
 	*/
 	void initCircBuffer(
-		LPCWSTR buffName, 
+		LPCWSTR msgBuffName, 
 		const size_t & buffSize, 
 		const int& role,
-		const size_t & chunkSize // round up messages to multiple of this.
-		);
+		const size_t & chunkSize, // round up messages to multiple of this.
+		LPCWSTR varBuffName
+	);
+
+	void stopCircBuffer();
+
 	/*
 	push function used by the producer. The producer attempts to write data to the 
 	FileMap. Specifically it tries to write a message and append it to the Shared Memory (FileMap)
