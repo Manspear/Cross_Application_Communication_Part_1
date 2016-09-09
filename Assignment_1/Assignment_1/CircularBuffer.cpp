@@ -85,10 +85,11 @@ bool circularBuffer::push(const void * msg, size_t length)
 	*/
 	size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(messageHeader);
 	size_t totMsgLen = sizeof(messageHeader) + length + padding;
+	messageStruct* newMsg = (messageStruct*)msgBuff;
+
 	//Now try to push the message.
 	if (varBuff->diff == 0 && varBuff->oldDiff == 0)
-	{
-		messageStruct* newMsg = (messageStruct*)msgBuff;
+	{	
 		//newMsg += (char)varBuff->headPos;
 		newMsg->header.consumerPile = clientCount;
 		newMsg->header.id = msgCounter;
@@ -108,7 +109,6 @@ bool circularBuffer::push(const void * msg, size_t length)
 			 //If the tail was in front of the head but is now at the head
 		     varBuff->diff == 0 && varBuff->oldDiff < 0 && (size_t)(varBuff->headPos + totMsgLen) < (size_t)buffSize)
 	{		
-		messageStruct* newMsg = (messageStruct*)msgBuff;
 		newMsg += (char)varBuff->headPos;
 		newMsg->header.consumerPile = clientCount;
 		newMsg->header.id = msgCounter;
@@ -129,7 +129,6 @@ bool circularBuffer::push(const void * msg, size_t length)
 		if (varBuff->tailPos > totMsgLen)
 		{
 			//First make a dummy message at the end
-			messageStruct* newMsg = (messageStruct*)msgBuff;
 			newMsg += (char)varBuff->headPos;
 			newMsg->header.consumerPile = clientCount;
 			newMsg->header.id = msgCounter;
@@ -160,7 +159,6 @@ bool circularBuffer::push(const void * msg, size_t length)
 	}//                                                              <= ???????????????
 	else if (varBuff->diff < 0 && (size_t)(varBuff->headPos + totMsgLen) <= varBuff->tailPos)
 	{
-		messageStruct* newMsg = (messageStruct*)msgBuff;
 		newMsg->header.consumerPile = clientCount;
 		newMsg->header.id = msgCounter;
 		msgCounter++;
