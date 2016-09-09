@@ -84,8 +84,6 @@ bool circularBuffer::push(const void * msg, size_t length)
 	modMsg.header.consumerPile--;
 	size_t totMsgLen = modMsg.header.padding + length;
 	//Now try to push the message.
-	msgBuff;
-	varBuff;
 
 	sharedVariables var;
 	memcpy(&var, varBuff, sizeof(sharedVariables));
@@ -95,6 +93,7 @@ bool circularBuffer::push(const void * msg, size_t length)
 		var.headPos += totMsgLen;
 		var.oldDiff = 0;
 		var.diff = var.headPos + totMsgLen;
+		memcpy(varBuff, &var, sizeof(sharedVariables));
 		return true;
 	}
 	//If the tail is behind the head && If there is enough space to push at "the end" of the buffer
@@ -104,6 +103,7 @@ bool circularBuffer::push(const void * msg, size_t length)
 		var.headPos += totMsgLen;
 		var.oldDiff = var.diff;
 		var.diff = var.headPos - var.tailPos;
+		memcpy(varBuff, &var, sizeof(sharedVariables));
 		return true;
 	}
 	//If the tail is behind the head && If there is not enough space to push at "the end" of the buffer
@@ -116,6 +116,7 @@ bool circularBuffer::push(const void * msg, size_t length)
 			var.headPos = totMsgLen;
 			var.oldDiff = var.diff;
 			var.diff = var.headPos - var.tailPos;
+			memcpy(varBuff, &var, sizeof(sharedVariables));
 			return true;
 		}
 	}
@@ -126,9 +127,9 @@ bool circularBuffer::push(const void * msg, size_t length)
 		var.headPos += totMsgLen;
 		var.oldDiff = var.diff;
 		var.diff = var.headPos - var.tailPos;
+		memcpy(varBuff, &var, sizeof(sharedVariables));
 		return true;
 	}
-
 	
 	return false;
 }

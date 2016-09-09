@@ -44,7 +44,7 @@ void Producer::runProducer(circularBuffer& buffInst)
 		void* msg = makeMessage();
 		messageHeader thing;
 		memcpy(&thing, msg, sizeof(messageHeader));
-		int msgSize = thing.length + thing.padding + sizeof(messageHeader);
+		size_t msgSize = thing.length;
 		//Try to push msg
 		while (!buffInst.push(msg, msgSize))
 		{

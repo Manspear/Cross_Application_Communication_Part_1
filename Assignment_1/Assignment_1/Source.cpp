@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 	{
 		msgSizeMode = RANDOM;
 	}
-	else if (atoi(argv[5]) < (fileMapSize / 4))
+	else if (atoi(argv[5]) < (size_t)(fileMapSize / 4))
 	{
 		msgSizeMode = MSGSIZE;
 		maxMsgSize = fileMapSize / 4;
