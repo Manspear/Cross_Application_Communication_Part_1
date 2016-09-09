@@ -9,7 +9,7 @@ struct messageHeader
 struct messageStruct
 {
 	messageHeader header;
-	char message[30];
+	char* message;
 };
 struct sharedVariables
 {

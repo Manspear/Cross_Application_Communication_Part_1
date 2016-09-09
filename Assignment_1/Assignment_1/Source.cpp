@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 	else if (atoi(argv[5]) < (size_t)(fileMapSize / 4))
 	{
 		msgSizeMode = MSGSIZE;
-		maxMsgSize = fileMapSize / 4;
+		maxMsgSize = atoi(argv[5]);
 	}
 	else {
 		LPCWSTR error = TEXT("argv[5] doesn't supply a valid string");

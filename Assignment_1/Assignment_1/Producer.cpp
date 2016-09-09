@@ -24,29 +24,36 @@ Producer::~Producer()
 {
 }
 
-void * Producer::makeMessage()
+void Producer::makeMessage(char* msg, size_t numMsg)
 {
-	messageStruct* lol = new messageStruct;
-	char popo[] = "kkkkkkkkk1";
-	int lengthi = strlen(popo) + 1;
-	memcpy(lol->message, popo, lengthi);
-	lol->header.id = 1;
-	lol->header.length = sizeof(messageHeader) + strlen(lol->message) + 1;
+	
+	//messageStruct* lol = new messageStruct;
+	//char popo[] = "kkkkkkkkk1";
+	//int lengthi = strlen(popo) + 1;
+	//memcpy(lol->message, popo, lengthi);
+	//lol->header.id = 1;
+	//lol->header.length = sizeof(messageHeader) + strlen(lol->message) + 1;
 	//lol->header.padding = 256 - lol->header.length;
-
-	return (void*)lol;
+	for (int i = 0; i < numMsg; i++)
+	{
+		msg[i] = 'a';
+		if (i == numMsg - 1)
+			msg[i] = '\0';
+	}
+	int pooo = 0;
 }
 
 void Producer::runProducer(circularBuffer& buffInst)
 {
+	int messageLength = 15;
+	char* msg = new char[messageLength];
+	//Make this change depending on msgSizeMode
+	
 	while (messageCount < requestedMessages)
 	{
-		void* msg = makeMessage();
-		messageHeader thing;
-		memcpy(&thing, msg, sizeof(messageHeader));
-		size_t msgSize = thing.length;
+		makeMessage(msg, messageLength);
 		//Try to push msg
-		while (!buffInst.push(msg, msgSize))
+		while (!buffInst.push(msg, strlen(msg)))
 		{
 			Sleep(delay);
 		}

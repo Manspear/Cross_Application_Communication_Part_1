@@ -16,7 +16,9 @@ private:
 	HANDLE msgFileMap;
 	char* msgBuff;
 	HANDLE varFileMap;
-	char* varBuff;
+	sharedVariables* varBuff;
+	size_t clientCount;
+	size_t msgCounter;
 	
 public:
 	size_t sharedMemSize;
