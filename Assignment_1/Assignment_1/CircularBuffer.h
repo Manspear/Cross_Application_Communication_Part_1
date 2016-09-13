@@ -45,7 +45,8 @@ public:
 		const size_t& buffSize, 
 		const int& role,
 		const size_t& chunkSize, // round up messages to multiple of this.
-		LPCWSTR varBuffName
+		LPCWSTR varBuffName, 
+		size_t numberOfClients
 	);
 
 	void stopCircBuffer();

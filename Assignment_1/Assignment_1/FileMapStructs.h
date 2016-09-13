@@ -17,4 +17,5 @@ struct sSharedVars
 	size_t tailPos;
 	size_t diff;
 	size_t oldDiff;
+	size_t clientCounter;
 };

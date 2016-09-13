@@ -16,9 +16,10 @@ HANDLE Mutex::getMutex()
 
 void Mutex::lock()
 {
-	
+	DWORD waitRes = WaitForSingleObject(mutexHandle, INFINITE);
 }
 
 void Mutex::unlock()
 {
+	ReleaseMutex(mutexHandle);
 }

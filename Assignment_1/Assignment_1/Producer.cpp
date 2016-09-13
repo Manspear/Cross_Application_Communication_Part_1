@@ -44,7 +44,7 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 
 void Producer::runProducer(circularBuffer& buffInst)
 {
-	int messageLength = 15;
+	int messageLength = 5;
 	char* msg = new char[messageLength];
 	//Make this change depending on msgSizeMode
 	
@@ -52,7 +52,7 @@ void Producer::runProducer(circularBuffer& buffInst)
 	{
 		makeMessage(msg, messageLength);
 		//Try to push msg
-		while (!buffInst.push(msg, strlen(msg)))
+		while (!buffInst.push(msg, messageLength))
 		{
 			Sleep(delay);
 		}
