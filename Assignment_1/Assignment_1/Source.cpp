@@ -66,14 +66,14 @@ int main(int argc, char* argv[]) {
 	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName);
 	if (role == PRODUCER)
 	{
-		int messageAlignment = 256;
-		Producer producer = Producer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment, varBuffName);
+		int chunkSize = 256;
+		Producer producer = Producer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
 		producer.runProducer(cirB);
 	}
 	if (role == CONSUMER)
 	{
-		int messageAlignment = 256;
-		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, messageAlignment, varBuffName);
+		int chunkSize = 256;
+		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
 		consumer.runConsumer(cirB);
 	}
 	//CreateFile(TEXT("Shared"), GENERIC_READ | GENERIC_WRITE, )

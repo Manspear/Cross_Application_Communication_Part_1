@@ -24,7 +24,7 @@ Producer::~Producer()
 {
 }
 
-void Producer::makeMessage(char* msg, size_t numMsg)
+void Producer::makeMessage(char* msg, size_t msgLen)
 {
 	
 	//messageStruct* lol = new messageStruct;
@@ -34,13 +34,12 @@ void Producer::makeMessage(char* msg, size_t numMsg)
 	//lol->header.id = 1;
 	//lol->header.length = sizeof(messageHeader) + strlen(lol->message) + 1;
 	//lol->header.padding = 256 - lol->header.length;
-	for (int i = 0; i < numMsg; i++)
+	for (int i = 0; i < msgLen; i++)
 	{
 		msg[i] = 'a';
-		if (i == numMsg - 1)
+		if (i == msgLen - 1)
 			msg[i] = '\0';
 	}
-	int pooo = 0;
 }
 
 void Producer::runProducer(circularBuffer& buffInst)

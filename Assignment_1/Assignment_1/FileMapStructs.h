@@ -1,17 +1,17 @@
 #pragma once
-struct messageHeader
+struct sMsgHeader
 {
 	size_t id;
 	size_t length;
 	size_t padding;
 	size_t consumerPile;
 };
-struct messageStruct
+struct sMsgStruct
 {
-	messageHeader header;
+	sMsgHeader header;
 	char* message;
 };
-struct sharedVariables
+struct sSharedVars
 {
 	size_t headPos;
 	size_t tailPos;

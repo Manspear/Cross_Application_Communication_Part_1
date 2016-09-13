@@ -146,6 +146,7 @@
     <ClCompile Include="CircularBuffer.cpp" />
     <ClCompile Include="Consumer.cpp" />
     <ClCompile Include="Dummy.cpp" />
+    <ClCompile Include="Mutex.cpp" />
     <ClCompile Include="Producer.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
@@ -154,6 +155,7 @@
     <ClInclude Include="Consumer.h" />
     <ClInclude Include="Dummy.h" />
     <ClInclude Include="FileMapStructs.h" />
+    <ClInclude Include="Mutex.h" />
     <ClInclude Include="Producer.h" />
     <ClInclude Include="StackExchange.h" />
   </ItemGroup>

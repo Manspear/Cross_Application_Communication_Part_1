@@ -30,6 +30,6 @@ public:
 			 int & chunkSize, 
 			 LPCWSTR varBuffName);
 	~Producer();
-	void makeMessage(char* msg, size_t numMsg);
+	void makeMessage(char* msg, size_t msgLen);
 	void runProducer(circularBuffer& buffInst);
 };

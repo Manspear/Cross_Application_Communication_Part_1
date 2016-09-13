@@ -26,7 +26,7 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 		nullptr,
 		PAGE_READWRITE,
 		0,
-		sizeof(sharedVariables),
+		sizeof(sSharedVars),
 		varBuffBuffName
 	);
 	if (varFileMap == nullptr)
@@ -42,17 +42,20 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 		0,
 		buffSize
 	);
-	varBuff = (sharedVariables*)MapViewOfFile(
+	varBuff = (sSharedVars*)MapViewOfFile(
 		varFileMap,
 		FILE_MAP_ALL_ACCESS,
 		0,
 		0,
-		sizeof(sharedVariables)
+		sizeof(sSharedVars)
 	);
 	varBuff->headPos = 0;
 	varBuff->tailPos = 0;
 	varBuff->diff = 0;
 	varBuff->oldDiff = 0;
+	lTail.lPos = varBuff->tailPos;
+	lTail.lDiff = varBuff->diff;
+	lTail.lOldDiff = varBuff->oldDiff;
 	
 	int headCurrstep = 0;
 	int diffSteps = 0; //if negative head is behind tail, if positive head is in front of tail
@@ -61,6 +64,9 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 	int oldDiffSteps = 0;
 	msgCounter = 0;
 	clientCount = 1;
+
+	mutex1 = Mutex(LPCWSTR(TEXT("Mutex1")));
+
 }
 
 void circularBuffer::stopCircBuffer()
@@ -83,44 +89,21 @@ bool circularBuffer::push(const void * msg, size_t length)
 	I add the padding as a varBuffiable 
 	to the header. So that consumers needn't calculate it.
 	*/
-	size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(messageHeader);
-	size_t totMsgLen = sizeof(messageHeader) + length + padding;
-	messageStruct* newMsg = (messageStruct*)msgBuff;
+	size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
+	size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
+	sMsgStruct* newMsg = (sMsgStruct*)msgBuff;
 
 	//Now try to push the message.
 	if (varBuff->diff == 0 && varBuff->oldDiff == 0)
 	{	
-		//newMsg += (char)varBuff->headPos;
-		newMsg->header.consumerPile = clientCount;
-		newMsg->header.id = msgCounter;
-		msgCounter++;
-		newMsg->header.length = sizeof(messageHeader) + length;
-		newMsg->header.padding = padding;
-		newMsg->message = (char*)msg;
-		varBuff->headPos += totMsgLen;
-
-		varBuff->oldDiff = varBuff->diff;
-		varBuff->diff = varBuff->headPos - varBuff->tailPos;
-		
-		return true;
+		return pushMsg(false, true, msg, length);
 	}//If the tail is behind the head && If there is enough space to push at "the end" of the buffer
 	else if (varBuff->diff > 0 && ((size_t)(varBuff->headPos + totMsgLen) < (size_t)buffSize) || 
 			 varBuff->diff == 0 && varBuff->oldDiff > 0 && ((size_t)(varBuff->headPos + totMsgLen) < (size_t)buffSize) ||
 			 //If the tail was in front of the head but is now at the head
 		     varBuff->diff == 0 && varBuff->oldDiff < 0 && (size_t)(varBuff->headPos + totMsgLen) < (size_t)buffSize)
 	{		
-		newMsg += (char)varBuff->headPos;
-		newMsg->header.consumerPile = clientCount;
-		newMsg->header.id = msgCounter;
-		msgCounter++;
-		newMsg->header.length = sizeof(messageHeader) + length;
-		newMsg->header.padding = padding;
-		newMsg->message = (char*)msg;
-		varBuff->headPos += totMsgLen;
-		varBuff->oldDiff = varBuff->diff;
-		varBuff->diff = varBuff->headPos - varBuff->tailPos;
-
-		return true;
+		return pushMsg(false, false, msg, length);
 	}//If the tail is behind the head && If there is not enough space to push at "the end" of the buffer
 	else if (varBuff->diff > 0 && ((size_t)(varBuff->headPos + totMsgLen) > (size_t)buffSize) ||
 		     varBuff->diff == 0 && varBuff->oldDiff > 0 && ((size_t)(varBuff->headPos + totMsgLen) > (size_t)buffSize))
@@ -128,48 +111,12 @@ bool circularBuffer::push(const void * msg, size_t length)
 		//See if there's room at the start of the buffer
 		if (varBuff->tailPos > totMsgLen)
 		{
-			//First make a dummy message at the end
-			newMsg += (char)varBuff->headPos;
-			newMsg->header.consumerPile = clientCount;
-			newMsg->header.id = msgCounter;
-			msgCounter++;
-			newMsg->header.length = 0;
-			newMsg->header.padding =  ((size_t)buffSize - varBuff->headPos) - sizeof(messageHeader);
-			
-			//Move the head to the start
-			newMsg = (messageStruct*)msgBuff;
-			varBuff->headPos = 0;
-			varBuff->oldDiff = varBuff->diff;
-			varBuff->diff = varBuff->headPos - varBuff->tailPos;
-			
-			//Make a message at the start
-			newMsg->header.consumerPile = clientCount;
-			newMsg->header.id = msgCounter;
-			msgCounter++;
-			newMsg->header.length = sizeof(messageHeader) + length;
-			newMsg->header.padding = padding;
-			newMsg->message = (char*)msg;
-
-			varBuff->headPos = totMsgLen;
-			varBuff->oldDiff = varBuff->diff;
-			varBuff->diff = varBuff->headPos - varBuff->tailPos;
-
-			return true;
+			return pushMsg(true, false, msg, length);
 		}
-	}//                                                              <= ???????????????
+	}                                                            
 	else if (varBuff->diff < 0 && (size_t)(varBuff->headPos + totMsgLen) <= varBuff->tailPos)
 	{
-		newMsg->header.consumerPile = clientCount;
-		newMsg->header.id = msgCounter;
-		msgCounter++;
-		newMsg->header.length = sizeof(messageHeader) + length;
-		newMsg->header.padding = padding;
-		newMsg->message = (char*)msg;
-
-		varBuff->headPos += totMsgLen;
-		varBuff->oldDiff = varBuff->diff;
-		varBuff->diff = varBuff->headPos - varBuff->tailPos;
-		return true;
+		return pushMsg(false, false, msg, length);
 	}
 	return false;
 }
@@ -182,6 +129,128 @@ bool circularBuffer::pop(char * msg, size_t & length)
 	and it moves the tail forward one step. The tail being expressed as
 	tailStep saying "where" in the buffer it is.
 	*/
+	/*
+	First step: read the message at tail position:
+	*/
+	//Calc new diff
+	lTail.lDiff = varBuff->headPos - lTail.lPos;
+	//To start off, tail waits for head to write something
+	if (lTail.lDiff == 0 && lTail.lOldDiff == 0 && varBuff->headPos == 0)
+	{
+		return false;
+	}
+	if (lTail.lDiff > 0 || lTail.lDiff < 0)
+	{
+		return procMsg(msg, &length);
+	}
+	if (lTail.lDiff == 0)
+	{
+		//if tail was behind head
+		if (lTail.lOldDiff > 0)
+		{
+			//wait
+			return false;
+		}
+		//if tail was ahead of head
+		if (lTail.lOldDiff < 0)
+		{
+			return procMsg(msg, &length);
+		}
+	}
+	return false;
+}
+
+bool circularBuffer::procMsg(char * msg, size_t * length)
+{
+	sMsgHeader* readHeader = (sMsgHeader*)msgBuff;
+
+	readHeader += (char)lTail.lPos;
+	*length = readHeader->length - sizeof(sMsgHeader);
+	sMsgStruct* readMsg = (sMsgStruct*)msgBuff;
+	readMsg += (char)lTail.lPos;
+	msg = new char[*length];
+	memcpy(msg, readMsg->message, *length);
+	readMsg->header.consumerPile--;
+
+	if (readMsg->header.consumerPile == 0)
+	{
+		if ((size_t)(varBuff->tailPos + readMsg->header.length + readMsg->header.padding) >= (size_t)buffSize)
+		{
+			varBuff->tailPos = 0;
+		}
+		else
+		{
+			varBuff->tailPos += readMsg->header.length + readMsg->header.padding;
+			varBuff->oldDiff = varBuff->diff;
+			varBuff->diff = varBuff->headPos - varBuff->tailPos;
+		}
+	}
+	//If the tail jumps to the end of the buffer
+	if ((size_t)(lTail.lPos + readMsg->header.length + readMsg->header.padding) >= (size_t)buffSize)
+	{
+		lTail.lOldDiff = lTail.lDiff;
+		lTail.lPos = 0;
+		return true;
+	}
+	//if the tail jump is within the buffer
+	else if (((size_t)(lTail.lPos + readMsg->header.length + readMsg->header.padding) < (size_t)buffSize))
+	{
+		lTail.lOldDiff = lTail.lDiff;
+		lTail.lPos += readMsg->header.length + readMsg->header.padding;
+		return true;
+	}
+	return true;
+}
+
+bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & length)
+{
+	size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
+	size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
+	sMsgStruct* newMsg = (sMsgStruct*)msgBuff;
+	if (!reset)
+	{
+		if (!start)
+			newMsg += (char)varBuff->headPos;
+		newMsg->header.consumerPile = clientCount;
+		newMsg->header.id = msgCounter;
+		msgCounter++;
+		newMsg->header.length = sizeof(sMsgHeader) + length;
+		newMsg->header.padding = padding;
+		newMsg->message = (char*)msg;
+
+		varBuff->headPos += totMsgLen;
+		varBuff->oldDiff = varBuff->diff;
+		varBuff->diff = varBuff->headPos - varBuff->tailPos;
+		return true;
+	}
+	if (reset)
+	{
+		//First make a dummy message at the end
+		newMsg += (char)varBuff->headPos;
+		newMsg->header.consumerPile = clientCount;
+		newMsg->header.id = msgCounter;
+		msgCounter++;
+		newMsg->header.length = 0;
+		newMsg->header.padding = ((size_t)buffSize - varBuff->headPos) - sizeof(sMsgHeader);
+
+		//Move the head to the start
+		newMsg = (sMsgStruct*)msgBuff;
+		varBuff->headPos = 0;
+		varBuff->oldDiff = varBuff->diff;
+		varBuff->diff = varBuff->headPos - varBuff->tailPos;
+
+		//Make a message at the start
+		newMsg->header.consumerPile = clientCount;
+		newMsg->header.id = msgCounter;
+		msgCounter++;
+		newMsg->header.length = sizeof(sMsgHeader) + length;
+		newMsg->header.padding = padding;
+		newMsg->message = (char*)msg;
+
+		varBuff->headPos = totMsgLen;
+		varBuff->oldDiff = varBuff->diff;
+		varBuff->diff = varBuff->headPos - varBuff->tailPos;
+	}
 	return false;
 }
 
