@@ -6,11 +6,7 @@ struct sMsgHeader
 	size_t padding;
 	size_t consumerPile;
 };
-struct sMsgStruct
-{
-	sMsgHeader header;
-	char* message;
-};
+
 struct sSharedVars
 {
 	size_t headPos;

@@ -96,9 +96,9 @@ bool circularBuffer::push(const void * msg, size_t length)
 	if (varBuff->clientCounter == 0)
 	{
 		printf("Producer got in\n");
-		size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgStruct);
-		size_t totMsgLen = sizeof(sMsgStruct) + length + padding;
-		sMsgStruct* newMsg = (sMsgStruct*)msgBuff;
+		size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
+		size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
+		sMsgHeader* newMsg = (sMsgHeader*)msgBuff;
 
 		//Now try to push the message.
 		if (varBuff->diff == 0 && varBuff->oldDiff == 0)
@@ -181,9 +181,9 @@ bool circularBuffer::pop(char * msg, size_t & length)
 
 bool circularBuffer::procMsg(char * msg, size_t * length)
 {
-	sMsgStruct* readMsg = (sMsgStruct*)msgBuff;
+	sMsgHeader* readMsg = (sMsgHeader*)msgBuff;
 	readMsg += (char)lTail.lPos;
-	*length = readMsg->header.length - sizeof(sMsgStruct);
+	*length = readMsg->length - sizeof(sMsgHeader);
 	//msg = new char[*length];
 	//msg has allocated space. 
 	//But it crashes here on the memcopy.
@@ -191,50 +191,43 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 
 	//Why does this work{
 	char* yolo = (char*)readMsg;
-	//readMsg->message += -(char)length;
-
-	yolo += (char)(sizeof(sMsgStruct));
-	bool popo = false;
-	if ((void*)yolo == (void*)readMsg->message)
-	{
-		popo = true;
-	}
+	yolo += (char)(sizeof(sMsgHeader));
 	memcpy(msg, yolo, *length);
 	//}
 	//But not this:
 	//memcpy(msg, (void*)readMsg->message, *length);
-	readMsg->header.consumerPile--;
+	readMsg->consumerPile--;
 
 	//My theory:
 	/*
-	... The spot readMsg->message points to gets changed, like the FileMap changing location
+	... The spot readMsg->message points to gets changed, like the FileMap changing locationwhen more applications read from it.
 	*/
 
-	if (readMsg->header.consumerPile == 0)
+	if (readMsg->consumerPile == 0)
 	{
-		if ((size_t)(varBuff->tailPos + readMsg->header.length + readMsg->header.padding) >= (size_t)buffSize)
+		if ((size_t)(varBuff->tailPos + readMsg->length + readMsg->padding) >= (size_t)buffSize)
 		{
 			varBuff->tailPos = 0;
 		}
 		else
 		{
-			varBuff->tailPos += readMsg->header.length + readMsg->header.padding;
+			varBuff->tailPos += readMsg->length + readMsg->padding;
 			varBuff->oldDiff = varBuff->diff;
 			varBuff->diff = varBuff->headPos - varBuff->tailPos;
 		}
 	}
 	//If the tail jumps to the end of the buffer
-	if ((size_t)(lTail.lPos + readMsg->header.length + readMsg->header.padding) >= (size_t)buffSize)
+	if ((size_t)(lTail.lPos + readMsg->length + readMsg->padding) >= (size_t)buffSize)
 	{
 		lTail.lOldDiff = lTail.lDiff;
 		lTail.lPos = 0;
 		return true;
 	}
 	//if the tail jump is within the buffer
-	else if (((size_t)(lTail.lPos + readMsg->header.length + readMsg->header.padding) < (size_t)buffSize))
+	else if (((size_t)(lTail.lPos + readMsg->length + readMsg->padding) < (size_t)buffSize))
 	{
 		lTail.lOldDiff = lTail.lDiff;
-		lTail.lPos += readMsg->header.length + readMsg->header.padding;
+		lTail.lPos += readMsg->length + readMsg->padding;
 		return true;
 	}
 	return true;
@@ -242,22 +235,25 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 
 bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & length)
 {
-	size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgStruct);
-	size_t totMsgLen = sizeof(sMsgStruct) + length + padding;
-	sMsgStruct* newMsg = (sMsgStruct*)msgBuff;
+	size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
+	size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
+	sMsgHeader* newMsg = (sMsgHeader*)msgBuff;
 	if (!reset)
 	{
 		if (!start)
 			newMsg += (char)varBuff->headPos;
-		newMsg->header.consumerPile = clientCount;
-		newMsg->header.id = msgCounter;
+		newMsg->consumerPile = clientCount;
+		newMsg->id = msgCounter;
 		msgCounter++;
-		newMsg->header.length = sizeof(sMsgStruct) + length;
-		newMsg->header.padding = padding;
+		newMsg->length = sizeof(sMsgHeader) + length;
+		newMsg->padding = padding;
 		//newMsg->message = (char*)msg;
-		newMsg->message = (char*)newMsg;
+		char* msgPointer = (char*)newMsg;
+		msgPointer += (char)(sizeof(sMsgHeader));
+		memcpy(msgPointer, msg, length);
+		/*newMsg->message = (char*)newMsg;
 		newMsg->message += (char)(sizeof(sMsgStruct));
-		memcpy(newMsg->message, msg, length);
+		memcpy(newMsg->message, msg, length);*/
 
 
 		size_t lHeadPos = varBuff->headPos;
@@ -273,29 +269,33 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		//First make a dummy message at the end
 		size_t lHeadPos = varBuff->headPos;
 		newMsg += (char)lHeadPos;
-		newMsg->header.consumerPile = clientCount;
-		newMsg->header.id = msgCounter;
+		newMsg->consumerPile = clientCount;
+		newMsg->id = msgCounter;
 		msgCounter++;
-		newMsg->header.length = 0;
-		newMsg->header.padding = ((size_t)buffSize - lHeadPos) - sizeof(sMsgStruct);
+		newMsg->length = 0;
+		newMsg->padding = ((size_t)buffSize - lHeadPos) - sizeof(sMsgHeader);
 
 		//Move the head to the start
-		newMsg = (sMsgStruct*)msgBuff;
+		newMsg = (sMsgHeader*)msgBuff;
 		lHeadPos = 0;
 		varBuff->oldDiff = varBuff->diff;
 		varBuff->diff = varBuff->headPos - varBuff->tailPos;
 
 		//Make a message at the start
-		newMsg->header.consumerPile = clientCount;
-		newMsg->header.id = msgCounter;
+		newMsg->consumerPile = clientCount;
+		newMsg->id = msgCounter;
 		msgCounter++;
-		newMsg->header.length = sizeof(sMsgStruct) + length;
-		newMsg->header.padding = padding;
+		newMsg->length = sizeof(sMsgHeader) + length;
+		newMsg->padding = padding;
 		/**newMsg->message = *(char*)msg;
 		memcpy(newMsg->message, msg, length);*/
-		newMsg->message = (char*)newMsg;
+		char* msgPointer = (char*)newMsg;
+		msgPointer += (char)(sizeof(sMsgHeader));
+		memcpy(msgPointer, msg, length);
+		
+		/*newMsg->message = (char*)newMsg;
 		newMsg->message += (char)(sizeof(sMsgStruct));
-		memcpy(newMsg->message, msg, length);
+		memcpy(newMsg->message, msg, length);*/
 
 		varBuff->oldDiff = varBuff->diff;
 		lHeadPos = totMsgLen;
