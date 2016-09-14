@@ -2,10 +2,11 @@
 
 void Consumer::runConsumer(circularBuffer& buffInst)
 {
+	char* msg = new char[maxMsgSize];
 	while (messageCount < requestedMessages)
 	{
-		char* msg = new char[20];
 		size_t length;
+		Sleep(delay);
 		while (!buffInst.pop(msg, length))
 		{
 			Sleep(delay);

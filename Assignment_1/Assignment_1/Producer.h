@@ -5,9 +5,17 @@
 #include <iostream>
 #include "CircularBuffer.h"
 #include "FileMapStructs.h"
+#include <time.h>
 class Producer
 {
 private:
+	enum {
+		PRODUCER = 0,
+		CONSUMER = 1,
+		RANDOM = 0,
+		MSGSIZE = 1
+	};
+
 	int localStep;
 	int localDiff;
 	int localOldDiff;
@@ -27,7 +35,8 @@ public:
 	Producer();
 	Producer(int & delay, 
 			 int & numMessages, 
-			 size_t & maxMsgSize, 
+			 size_t & maxMsgSize,
+			 int& msgSizeMode,
 			 size_t & buffSize, 
 			 int & chunkSize, 
 			 LPCWSTR varBuffName);

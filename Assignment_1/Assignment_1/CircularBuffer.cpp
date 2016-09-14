@@ -95,7 +95,7 @@ bool circularBuffer::push(const void * msg, size_t length)
 	*/
 	if (varBuff->clientCounter == 0)
 	{
-		printf("Producer got in\n");
+		//printf("Producer got in\n");
 		size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
 		size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
 		sMsgHeader* newMsg = (sMsgHeader*)msgBuff;
@@ -105,16 +105,17 @@ bool circularBuffer::push(const void * msg, size_t length)
 		{
 			return pushMsg(false, true, msg, length);
 		}//If the tail is behind the head && If there is enough space to push at "the end" of the buffer
-		else if (varBuff->diff > 0 && ((size_t)(varBuff->headPos + totMsgLen) < (size_t)buffSize) ||
-			varBuff->diff == 0 && varBuff->oldDiff > 0 && ((size_t)(varBuff->headPos + totMsgLen) < (size_t)buffSize) ||
+		else if (varBuff->diff > 0 && ((size_t)(varBuff->headPos + totMsgLen) <= *buffSize) ||
+			varBuff->diff == 0 && varBuff->oldDiff > 0 && ((size_t)(varBuff->headPos + totMsgLen) <= *buffSize)// ||
 			//If the tail was in front of the head but is now at the head
-			varBuff->diff == 0 && varBuff->oldDiff < 0 && (size_t)(varBuff->headPos + totMsgLen) < (size_t)buffSize)
-		{
+			//varBuff->diff == 0 && varBuff->oldDiff < 0 && (size_t)(varBuff->headPos + totMsgLen) <= *buffSize)
+		){
 			return pushMsg(false, false, msg, length);
 		}//If the tail is behind the head && If there is not enough space to push at "the end" of the buffer
-		else if (varBuff->diff > 0 && ((size_t)(varBuff->headPos + totMsgLen) > (size_t)buffSize) ||
-			varBuff->diff == 0 && varBuff->oldDiff > 0 && ((size_t)(varBuff->headPos + totMsgLen) > (size_t)buffSize))
+		else if (varBuff->diff > 0 && ((size_t)(varBuff->headPos + totMsgLen) >= *buffSize) ||
+			varBuff->diff == 0 && varBuff->oldDiff > 0 && ((size_t)(varBuff->headPos + totMsgLen) >= *buffSize))
 		{
+			//printf("TotalMsgLen: %d TotalMsgLen + all: %d \n", totMsgLen, ((size_t)(varBuff->headPos + totMsgLen)));
 			//See if there's room at the start of the buffer
 			if (varBuff->tailPos > totMsgLen)
 			{
@@ -129,6 +130,9 @@ bool circularBuffer::push(const void * msg, size_t length)
 	else {
 		printf("Producer: Waiting for clients \n");
 	}
+	//Hmm... If (oldDiff < 0 && (head + msgSize) - tail > 0)
+	//				return false;
+	
 	return false;
 }
 
@@ -185,7 +189,6 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	tempCast += lTail.lPos;
 	sMsgHeader* readMsg = (sMsgHeader*)tempCast;
 	*length = readMsg->length - sizeof(sMsgHeader);
-	//msg = new char[*length];
 	//msg has allocated space. 
 	//But it crashes here on the memcopy.
 	//Which means that there is no message here. The message is not put onto the shared memory
@@ -206,26 +209,28 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 
 	if (readMsg->consumerPile == 0)
 	{
-		if ((size_t)(varBuff->tailPos + readMsg->length + readMsg->padding) >= (size_t)buffSize)
+		if ((size_t)(varBuff->tailPos + readMsg->length + readMsg->padding) >= *buffSize)
 		{
+			printf("Tail to start\n");
 			varBuff->tailPos = 0;
 		}
 		else
 		{
+			printf("Tail to forward\n");
 			varBuff->tailPos += readMsg->length + readMsg->padding;
 			varBuff->oldDiff = varBuff->diff;
 			varBuff->diff = varBuff->headPos - varBuff->tailPos;
 		}
 	}
 	//If the tail jumps to the end of the buffer
-	if ((size_t)(lTail.lPos + readMsg->length + readMsg->padding) >= (size_t)buffSize)
+	if ((size_t)(lTail.lPos + readMsg->length + readMsg->padding) >= *buffSize)
 	{
 		lTail.lOldDiff = lTail.lDiff;
 		lTail.lPos = 0;
 		return true;
 	}
 	//if the tail jump is within the buffer
-	else if (((size_t)(lTail.lPos + readMsg->length + readMsg->padding) < (size_t)buffSize))
+	else if (((size_t)(lTail.lPos + readMsg->length + readMsg->padding) <= *buffSize))
 	{
 		lTail.lOldDiff = lTail.lDiff;
 		lTail.lPos += readMsg->length + readMsg->padding;
@@ -274,18 +279,20 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		//Make sure that headPos is set last, since it determines when tails are beginning to read
 		//First make a dummy message at the end
 		size_t lHeadPos = varBuff->headPos;
-		newMsg += (char)lHeadPos;
+		char* tempCast = (char*)newMsg;
+		tempCast += lHeadPos;
+		newMsg = (sMsgHeader*)tempCast;
 		newMsg->consumerPile = clientCount;
 		newMsg->id = msgCounter;
 		msgCounter++;
 		newMsg->length = 0;
-		newMsg->padding = ((size_t)buffSize - lHeadPos) - sizeof(sMsgHeader);
+		newMsg->padding = (*buffSize - lHeadPos) - sizeof(sMsgHeader);
 
 		//Move the head to the start
 		newMsg = (sMsgHeader*)msgBuff;
 		lHeadPos = 0;
 		varBuff->oldDiff = varBuff->diff;
-		varBuff->diff = varBuff->headPos - varBuff->tailPos;
+		varBuff->diff = lHeadPos - varBuff->tailPos;
 
 		//Make a message at the start
 		newMsg->consumerPile = clientCount;

@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 	//Tail only makes sure that it doesn't read from the same Count-step as the head
 	int delay = atoi(argv[2]);
 	size_t fileMapSize = atoi(argv[3]); 
-	fileMapSize = fileMapSize << 20; //converts to bytes
+	//fileMapSize = fileMapSize << 20; //converts to bytes
 	int numMessages = atoi(argv[4]);
 	int role;
 	int msgSizeMode;
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 	{
 		msgSizeMode = RANDOM;
 	}
-	else if (atoi(argv[5]) < (size_t)(fileMapSize / 4))
+	else if (atoi(argv[5]) <= (size_t)(fileMapSize / 4))
 	{
 		msgSizeMode = MSGSIZE;
 		maxMsgSize = atoi(argv[5]);
@@ -72,22 +72,23 @@ int main(int argc, char* argv[]) {
 	if (role == PRODUCER)
 	{
 		int chunkSize = 256;
-		Producer producer = Producer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
+		Producer producer = Producer(delay, numMessages, maxMsgSize, msgSizeMode, fileMapSize, chunkSize, varBuffName);
 		producer.runProducer(cirB);
 
-	/*	Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
-		consumer.runConsumer(cirB);*/
+		//Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
+		//consumer.runConsumer(cirB);
 	}
 	//mut.unlock();
-	//mut.lock();
+	mut.lock();
 	if (role == CONSUMER)
 	{
+		printf("Consumer Init\n");
 		//Sleep(500);
 		int chunkSize = 256;
 		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
 		consumer.runConsumer(cirB);
 	}
-	//mut.unlock();
+	mut.unlock();
 	//CreateFile(TEXT("Shared"), GENERIC_READ | GENERIC_WRITE, )
 	//The first time a specific FileMap is created, it is created. 
 	//If you attempt to create the file map again you will only 

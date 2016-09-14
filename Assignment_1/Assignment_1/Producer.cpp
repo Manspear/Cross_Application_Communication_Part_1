@@ -4,7 +4,7 @@ Producer::Producer()
 {
 }
 
-Producer::Producer(int& delay, int& numMessages, size_t& maxMsgSize, size_t& buffSize, int& chunkSize, LPCWSTR varBuffName)
+Producer::Producer(int& delay, int& numMessages, size_t& maxMsgSize, int& msgSizeMode, size_t& buffSize, int& chunkSize, LPCWSTR varBuffName)
 {
 	this->delay = delay;
 	this->requestedMessages = numMessages;
@@ -13,12 +13,11 @@ Producer::Producer(int& delay, int& numMessages, size_t& maxMsgSize, size_t& buf
 	messageCount = 0;
 	//Create file map here for messages
 	//WOLOLO
-
 	localStep = 0;
 	localDiff = 0;
 	localOldDiff = 0;
 	memorySteps = buffSize / chunkSize;
-
+	srand(time(NULL));
 	testID = 0;
 }
 
@@ -36,9 +35,10 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 	//lol->header.id = 1;
 	//lol->header.length = sizeof(messageHeader) + strlen(lol->message) + 1;
 	//lol->header.padding = 256 - lol->header.length;
+
 	for (int i = 0; i < msgLen; i++)
 	{
-		msg[i] = testID + '0';
+		msg[i] = '1';
 		if (i == msgLen - 1)
 			msg[i] = '\0';
 	}
@@ -47,18 +47,31 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 
 void Producer::runProducer(circularBuffer& buffInst)
 {
-	int messageLength = 5;
-	char* msg = new char[messageLength];
+	char* msg;
+	int messageLength;
+		
 	//Make this change depending on msgSizeMode
-	
 	while (messageCount < requestedMessages)
 	{
+		if (msgSizeMode == RANDOM)
+		{
+			messageLength = rand() % (maxMsgSize - sizeof(sMsgHeader));
+			msg = new char[messageLength];
+		}
+		else if(msgSizeMode == MSGSIZE)
+		{
+			messageLength = maxMsgSize - sizeof(sMsgHeader);
+			msg = new char[maxMsgSize];
+		}
 		makeMessage(msg, messageLength);
 		//Try to push msg
 		while (!buffInst.push(msg, messageLength))
 		{
+			//printf("messageCount %d\n", messageCount);
 			Sleep(delay);
 		}
+		printf("messageCount %d\n", messageCount);
+		delete[]msg;
 		messageCount++;
 	}
 }
