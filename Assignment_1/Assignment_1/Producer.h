@@ -21,6 +21,8 @@ private:
 
 	int numMessages;
 
+	int testID;
+
 public:
 	Producer();
 	Producer(int & delay, 

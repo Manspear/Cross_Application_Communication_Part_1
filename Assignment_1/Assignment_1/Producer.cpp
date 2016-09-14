@@ -18,6 +18,8 @@ Producer::Producer(int& delay, int& numMessages, size_t& maxMsgSize, size_t& buf
 	localDiff = 0;
 	localOldDiff = 0;
 	memorySteps = buffSize / chunkSize;
+
+	testID = 0;
 }
 
 Producer::~Producer()
@@ -36,10 +38,11 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 	//lol->header.padding = 256 - lol->header.length;
 	for (int i = 0; i < msgLen; i++)
 	{
-		msg[i] = 'a';
+		msg[i] = testID + '0';
 		if (i == msgLen - 1)
 			msg[i] = '\0';
 	}
+	testID++;
 }
 
 void Producer::runProducer(circularBuffer& buffInst)

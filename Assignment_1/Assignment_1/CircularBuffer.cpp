@@ -147,7 +147,7 @@ bool circularBuffer::pop(char * msg, size_t & length)
 
 	if (varBuff->clientCounter == 0)
 	{
-		printf("Client got in\n");
+		//printf("Client got in\n");
 		lTail.lDiff = varBuff->headPos - lTail.lPos;
 		//To start off, tail waits for head to write something
 		if (lTail.lDiff == 0 && lTail.lOldDiff == 0 && varBuff->headPos == 0)
@@ -181,8 +181,9 @@ bool circularBuffer::pop(char * msg, size_t & length)
 
 bool circularBuffer::procMsg(char * msg, size_t * length)
 {
-	sMsgHeader* readMsg = (sMsgHeader*)msgBuff;
-	readMsg += (char)lTail.lPos;
+	char* tempCast = (char*)msgBuff;
+	tempCast += lTail.lPos;
+	sMsgHeader* readMsg = (sMsgHeader*)tempCast;
 	*length = readMsg->length - sizeof(sMsgHeader);
 	//msg = new char[*length];
 	//msg has allocated space. 
@@ -191,7 +192,7 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 
 	//Why does this work{
 	char* yolo = (char*)readMsg;
-	yolo += (char)(sizeof(sMsgHeader));
+	yolo += sizeof(sMsgHeader);
 	memcpy(msg, yolo, *length);
 	//}
 	//But not this:
@@ -240,8 +241,11 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 	sMsgHeader* newMsg = (sMsgHeader*)msgBuff;
 	if (!reset)
 	{
+		char* tempCast = (char*)newMsg;
+		//(char) or not (char)
 		if (!start)
-			newMsg += (char)varBuff->headPos;
+			tempCast += varBuff->headPos;
+		newMsg = (sMsgHeader*)tempCast;
 		newMsg->consumerPile = clientCount;
 		newMsg->id = msgCounter;
 		msgCounter++;
@@ -249,8 +253,10 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		newMsg->padding = padding;
 		//newMsg->message = (char*)msg;
 		char* msgPointer = (char*)newMsg;
-		msgPointer += (char)(sizeof(sMsgHeader));
+		msgPointer += sizeof(sMsgHeader);
 		memcpy(msgPointer, msg, length);
+
+		char* debugMsg = (char*)msg;
 		/*newMsg->message = (char*)newMsg;
 		newMsg->message += (char)(sizeof(sMsgStruct));
 		memcpy(newMsg->message, msg, length);*/
