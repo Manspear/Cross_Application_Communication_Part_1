@@ -9,11 +9,6 @@
 class circularBuffer
 {
 private:
-	struct sLTail
-	{
-		size_t lDiff, lOldDiff, lPos;
-	};
-	LPCWSTR msgBuffName;
 	const size_t * buffSize;
 	int role;
 	const size_t * chunkSize;
@@ -25,10 +20,10 @@ private:
 	size_t clientCount;
 	size_t msgCounter;
 
-	sLTail lTail;
+	size_t lTail;
 
 	Mutex mutex1;
-
+	
 	bool procMsg(char * msg, size_t * length);
 	bool pushMsg(bool reset, bool start, const void * msg, size_t & length);
 

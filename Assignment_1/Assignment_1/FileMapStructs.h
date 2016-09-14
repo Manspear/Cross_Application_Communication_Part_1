@@ -11,7 +11,6 @@ struct sSharedVars
 {
 	size_t headPos;
 	size_t tailPos;
-	size_t diff;
-	size_t oldDiff;
+	size_t freeMem;
 	size_t clientCounter;
 };

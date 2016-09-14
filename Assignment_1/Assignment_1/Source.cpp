@@ -8,7 +8,7 @@
 #include "Mutex.h"
 #include <time.h> //use time as a kernel for the rand() function. 
 #define CHUNKSIZE 256
-#define NUMCLIENTS 3
+#define NUMCLIENTS 5
 using namespace std;
 enum {
 	PRODUCER = 0,
@@ -16,6 +16,7 @@ enum {
 	RANDOM = 0,
 	MSGSIZE = 1
 };
+
 int main(int argc, char* argv[]) {
 	//argv[1]; producer || consumer
 	//argv[2]; delay in milliseconds
@@ -66,7 +67,6 @@ int main(int argc, char* argv[]) {
 	LPCWSTR msgBuffName = TEXT("MessageBuffer" );
 	LPCWSTR varBuffName = TEXT("VarBuffer");
 	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, NUMCLIENTS);
-	Mutex mut = Mutex(TEXT("Herbert"));
 
 	//mut.lock();
 	if (role == PRODUCER)
@@ -74,12 +74,9 @@ int main(int argc, char* argv[]) {
 		int chunkSize = 256;
 		Producer producer = Producer(delay, numMessages, maxMsgSize, msgSizeMode, fileMapSize, chunkSize, varBuffName);
 		producer.runProducer(cirB);
-
-		//Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
-		//consumer.runConsumer(cirB);
 	}
 	//mut.unlock();
-	mut.lock();
+	//mut.lock();
 	if (role == CONSUMER)
 	{
 		printf("Consumer Init\n");
@@ -88,7 +85,7 @@ int main(int argc, char* argv[]) {
 		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
 		consumer.runConsumer(cirB);
 	}
-	mut.unlock();
+	//mut.unlock();
 	//CreateFile(TEXT("Shared"), GENERIC_READ | GENERIC_WRITE, )
 	//The first time a specific FileMap is created, it is created. 
 	//If you attempt to create the file map again you will only 

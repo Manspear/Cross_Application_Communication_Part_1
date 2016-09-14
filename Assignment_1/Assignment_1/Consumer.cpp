@@ -28,13 +28,6 @@ Consumer::Consumer(int & delay, int & numMessages, size_t & maxMsgSize, size_t &
 	this->msgSizeMode = msgSizeMode;
 	this->maxMsgSize = maxMsgSize;
 	messageCount = 0;
-	//Create file map here for messages
-	//WOLOLO
-
-	localStep = 0;
-	localDiff = 0;
-	localOldDiff = 0;
-	memorySteps = buffSize / chunkSize;
 }
 
 Consumer::~Consumer()
