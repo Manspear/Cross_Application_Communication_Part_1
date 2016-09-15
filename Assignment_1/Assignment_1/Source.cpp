@@ -81,13 +81,22 @@ int main(int argc, char* argv[]) {
 		0,
 		sizeof(sSharedVars)
 	);
+	//Wait for the producer
+	
 
 	//Counts all consumers... Bad solution. Not scaleable.
-	if(role == PRODUCER)
+	if (role == PRODUCER)
+	{
 		varBuff->clientCounter = 0;
-	if (role == CONSUMER) 
+		varBuff->producerExist = true;
+	}
+	if (role == CONSUMER)
+	{
+		while (varBuff->producerExist == false)
+			Sleep(1);
 		varBuff->clientCounter++;
-	Sleep(500);
+	}
+	//Producer got to wait until all consumers have joined
 
 	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, varBuff->clientCounter);
 
@@ -114,6 +123,6 @@ int main(int argc, char* argv[]) {
 	//If you attempt to create the file map again you will only 
 	//get a handle to the already created FileMap
 	//CreateFileMapping()
-	//cin.get();
+	cin.get();
 	return 0;
 }

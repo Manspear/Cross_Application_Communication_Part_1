@@ -44,7 +44,7 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 	for (auto i = 0; i < msgLen; ++i) {
 		msg[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
 	}
-	msg[msgLen] = 0;
+	msg[msgLen-1] = '\0';
 
 	testID++;
 }
@@ -53,7 +53,6 @@ void Producer::runProducer(circularBuffer& buffInst)
 {
 	char* msg;
 	int messageLength;
-		
 	//Make this change depending on msgSizeMode
 	while (messageCount < requestedMessages)
 	{
