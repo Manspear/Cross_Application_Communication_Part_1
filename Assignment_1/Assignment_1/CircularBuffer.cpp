@@ -94,7 +94,7 @@ bool circularBuffer::push(const void * msg, size_t length)
 		
 	}
 	else {
-		printf("Producer: Waiting for clients \n");
+		//printf("Producer: Waiting for clients \n");
 	}
 	//Hmm... If (oldDiff < 0 && (head + msgSize) - tail > 0)
 	//				return false;
@@ -130,7 +130,7 @@ bool circularBuffer::pop(char * msg, size_t & length)
 		//varBuff->freeMem < *buffSize makes the tails read... wrongly
 	}
 	else {
-		printf("Consumer: Waiting for clients \n");
+		//printf("Consumer: Waiting for clients \n");
 	}
 	return false;
 }
@@ -142,12 +142,13 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	sMsgHeader* readMsg = (sMsgHeader*)tempCast;
 	*length = readMsg->length - sizeof(sMsgHeader);
 
-	printf("msgID %d	", readMsg->id);
+	//printf("msgID %d	", readMsg->id);
 
 	char* yolo = (char*)readMsg;
 	yolo += sizeof(sMsgHeader);
 	memcpy(msg, yolo, *length);
 
+	printf("%d ", readMsg->id);
 	readMsg->consumerPile--;
 
 	if (readMsg->consumerPile == 0)
@@ -156,12 +157,12 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 
 		if ((size_t)(varBuff->tailPos + readMsg->length + readMsg->padding) >= *buffSize)
 		{
-			printf("Tail to start\n");
+			//printf("Tail to start\n");
 			varBuff->tailPos = 0;
 		}
 		else
 		{
-			printf("Tail to forward\n");
+			//printf("Tail to forward\n");
 			varBuff->tailPos += readMsg->length + readMsg->padding;
 		}
 	}
@@ -202,7 +203,6 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		msgPointer += sizeof(sMsgHeader);
 		memcpy(msgPointer, msg, length);
 
-		char* debugMsg = (char*)msg;
 		/*newMsg->message = (char*)newMsg;
 		newMsg->message += (char)(sizeof(sMsgStruct));
 		memcpy(newMsg->message, msg, length);*/
@@ -215,7 +215,6 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 
 		if (varBuff->headPos == *buffSize)
 			varBuff->headPos = 0;
-
 		return true;
 	}
 	if (reset)

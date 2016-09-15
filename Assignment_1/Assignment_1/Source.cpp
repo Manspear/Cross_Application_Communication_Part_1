@@ -8,7 +8,7 @@
 #include "Mutex.h"
 #include <time.h> //use time as a kernel for the rand() function. 
 #define CHUNKSIZE 256
-#define NUMCLIENTS 5
+//#define NUMCLIENTS 5
 using namespace std;
 enum {
 	PRODUCER = 0,
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 	//Tail only makes sure that it doesn't read from the same Count-step as the head
 	int delay = atoi(argv[2]);
 	size_t fileMapSize = atoi(argv[3]); 
-	//fileMapSize = fileMapSize << 20; //converts to bytes
+	fileMapSize = fileMapSize << 20; //converts to bytes
 	int numMessages = atoi(argv[4]);
 	int role;
 	int msgSizeMode;
@@ -64,9 +64,32 @@ int main(int argc, char* argv[]) {
 	}
 
 	circularBuffer cirB;
-	LPCWSTR msgBuffName = TEXT("MessageBuffer" );
+	LPCWSTR msgBuffName = TEXT("MessageBuffer");
 	LPCWSTR varBuffName = TEXT("VarBuffer");
-	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, NUMCLIENTS);
+	HANDLE varFileMap = CreateFileMapping(
+		INVALID_HANDLE_VALUE,
+		nullptr,
+		PAGE_READWRITE,
+		0,
+		sizeof(sSharedVars),
+		varBuffName
+	);
+	sSharedVars* varBuff = (sSharedVars*)MapViewOfFile(
+		varFileMap,
+		FILE_MAP_ALL_ACCESS,
+		0,
+		0,
+		sizeof(sSharedVars)
+	);
+
+	//Counts all consumers... Bad solution. Not scaleable.
+	if(role == PRODUCER)
+		varBuff->clientCounter = 0;
+	if (role == CONSUMER) 
+		varBuff->clientCounter++;
+	Sleep(500);
+
+	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, varBuff->clientCounter);
 
 	//mut.lock();
 	if (role == PRODUCER)
@@ -79,7 +102,7 @@ int main(int argc, char* argv[]) {
 	//mut.lock();
 	if (role == CONSUMER)
 	{
-		printf("Consumer Init\n");
+		//printf("Consumer Init\n");
 		//Sleep(500);
 		int chunkSize = 256;
 		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
@@ -91,6 +114,6 @@ int main(int argc, char* argv[]) {
 	//If you attempt to create the file map again you will only 
 	//get a handle to the already created FileMap
 	//CreateFileMapping()
-	cin.get();
+	//cin.get();
 	return 0;
 }

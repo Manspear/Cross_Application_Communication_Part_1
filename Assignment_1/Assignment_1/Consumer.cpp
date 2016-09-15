@@ -11,8 +11,8 @@ void Consumer::runConsumer(circularBuffer& buffInst)
 		{
 			Sleep(delay);
 		}
-		printf("%s \n", msg);
-		printf("Msg above\n");
+		printf("%s\n", msg);
+		//printf("Msg above\n");
 		messageCount++;
 	}
 }

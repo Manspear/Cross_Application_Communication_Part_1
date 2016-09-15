@@ -36,12 +36,16 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 	//lol->header.length = sizeof(messageHeader) + strlen(lol->message) + 1;
 	//lol->header.padding = 256 - lol->header.length;
 
-	for (int i = 0; i < msgLen; i++)
-	{
-		msg[i] = '1';
-		if (i == msgLen - 1)
-			msg[i] = '\0';
+	static const char alphanum[] =
+		"0123456789"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"abcdefghijklmnopqrstuvwxyz";
+
+	for (auto i = 0; i < msgLen; ++i) {
+		msg[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
 	}
+	msg[msgLen] = 0;
+
 	testID++;
 }
 
@@ -70,7 +74,8 @@ void Producer::runProducer(circularBuffer& buffInst)
 			//printf("messageCount %d\n", messageCount);
 			Sleep(delay);
 		}
-		printf("messageCount %d\n", messageCount);
+		//sent msg
+		printf("%d %s\n", messageCount, msg);
 		delete[]msg;
 		messageCount++;
 	}
