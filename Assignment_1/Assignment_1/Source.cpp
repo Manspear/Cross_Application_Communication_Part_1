@@ -82,24 +82,25 @@ int main(int argc, char* argv[]) {
 		sizeof(sSharedVars)
 	);
 	//Wait for the producer
-	
-
 	//Counts all consumers... Bad solution. Not scaleable.
-	if (role == PRODUCER)
-	{
-		varBuff->clientCounter = 0;
-		varBuff->producerExist = true;
-	}
 	if (role == CONSUMER)
 	{
-		while (varBuff->producerExist == false)
-			Sleep(1);
 		varBuff->clientCounter++;
+		while (varBuff->producerExist == false)
+		{
+			Sleep(50);
+		}
+	}
+	if (role == PRODUCER)
+	{
+		varBuff->producerExist = true;
 	}
 	//Producer got to wait until all consumers have joined
+	//and then producer must use initCircBuffer first
+
 
 	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, varBuff->clientCounter);
-
+	//cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, 3);
 	//mut.lock();
 	if (role == PRODUCER)
 	{

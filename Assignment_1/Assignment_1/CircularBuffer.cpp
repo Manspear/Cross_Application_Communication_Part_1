@@ -51,6 +51,7 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 	varBuff->headPos = 0;
 	varBuff->tailPos = 0;
 	varBuff->freeMem = buffSize;
+	//producer must get here first
 	if (role == 0)
 		varBuff->clientCounter = numberOfClients;
 	if (role == 1)

@@ -12,6 +12,6 @@ struct sSharedVars
 	size_t headPos;
 	size_t tailPos;
 	size_t freeMem;
-	size_t clientCounter;
+	size_t clientCounter = 0;
 	bool producerExist = false;
 };
