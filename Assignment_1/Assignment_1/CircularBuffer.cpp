@@ -51,13 +51,40 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 	varBuff->headPos = 0;
 	varBuff->tailPos = 0;
 	varBuff->freeMem = buffSize;
-	//producer must get here first
-	this->clientCount = numberOfClients;
-	if (role == 0)
-		varBuff->clientCounter = numberOfClients;
+
+	//consumer
 	if (role == 1)
+	{
+		varBuff->clientCounter++;
+		while (varBuff->producerExist == false)
+		{
+			Sleep(50);
+		}
 		varBuff->clientCounter--;
-	
+	}
+	//making producer wait for clients to join, giving them 400 ms each at max
+	if (role == 0)
+	{
+		size_t old = varBuff->clientCounter;
+		int ticker = 0;
+		while (ticker < 4)
+		{
+			if (old < varBuff->clientCounter)
+			{
+				old = varBuff->clientCounter;
+				ticker = 0;
+			}
+			else
+				ticker++;
+			Sleep(100);
+		}
+		this->clientCount = varBuff->clientCounter;
+		varBuff->producerExist = true;
+	}
+	/*
+	I need clientcounter to be at max when entering initCircBuffer. This since the "consumerPile" is based off of clientcounter when it entered initCircBuffer.
+	*/
+
 	lTail = varBuff->tailPos;
 	
 	msgCounter = 0;

@@ -66,55 +66,8 @@ int main(int argc, char* argv[]) {
 	circularBuffer cirB;
 	LPCWSTR msgBuffName = TEXT("MessageBuffer");
 	LPCWSTR varBuffName = TEXT("VarBuffer");
-	HANDLE varFileMap = CreateFileMapping(
-		INVALID_HANDLE_VALUE,
-		nullptr,
-		PAGE_READWRITE,
-		0,
-		sizeof(sSharedVars),
-		varBuffName
-	);
-	sSharedVars* varBuff = (sSharedVars*)MapViewOfFile(
-		varFileMap,
-		FILE_MAP_ALL_ACCESS,
-		0,
-		0,
-		sizeof(sSharedVars)
-	);
-	//Wait for the producer
-	//Counts all consumers... Bad solution. Not scaleable.
-	if (role == CONSUMER)
-	{
-		varBuff->clientCounter++;
-		while (varBuff->producerExist == false)
-		{
-			Sleep(50);
-		}
-	}
-	//making producer wait for clients to join, giving them 400 ms each at max
-	if (role == PRODUCER)
-	{
-		size_t old = varBuff->clientCounter;
-		int ticker = 0;
-		while (ticker < 4)
-		{
-			if (old < varBuff->clientCounter)
-			{
-				old = varBuff->clientCounter;
-				ticker = 0;
-			}
-			else
-				ticker++;
-			Sleep(50);
-		}
-		varBuff->producerExist = true;
-	}
-	/*
-	I need clientcounter to be at max when entering initCircBuffer. This since the "consumerPile" is based off of clientcounter when it entered initCircBuffer.
-	*/
 
-
-	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, varBuff->clientCounter);
+	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, 1111);
 	//cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, 3);
 	//mut.lock();
 	if (role == PRODUCER)
