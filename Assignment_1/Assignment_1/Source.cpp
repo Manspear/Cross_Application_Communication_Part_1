@@ -91,12 +91,27 @@ int main(int argc, char* argv[]) {
 			Sleep(50);
 		}
 	}
+	//making producer wait for clients to join, giving them 400 ms each at max
 	if (role == PRODUCER)
 	{
+		size_t old = varBuff->clientCounter;
+		int ticker = 0;
+		while (ticker < 4)
+		{
+			if (old < varBuff->clientCounter)
+			{
+				old = varBuff->clientCounter;
+				ticker = 0;
+			}
+			else
+				ticker++;
+			Sleep(50);
+		}
 		varBuff->producerExist = true;
 	}
-	//Producer got to wait until all consumers have joined
-	//and then producer must use initCircBuffer first
+	/*
+	I need clientcounter to be at max when entering initCircBuffer. This since the "consumerPile" is based off of clientcounter when it entered initCircBuffer.
+	*/
 
 
 	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, varBuff->clientCounter);

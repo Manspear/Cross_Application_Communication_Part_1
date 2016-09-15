@@ -52,15 +52,15 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 	varBuff->tailPos = 0;
 	varBuff->freeMem = buffSize;
 	//producer must get here first
+	this->clientCount = numberOfClients;
 	if (role == 0)
 		varBuff->clientCounter = numberOfClients;
 	if (role == 1)
 		varBuff->clientCounter--;
-	this->clientCount = numberOfClients;
+	
 	lTail = varBuff->tailPos;
 	
 	msgCounter = 0;
-
 	mutex1 = Mutex(LPCWSTR(TEXT("Mutex1")));
 }
 
