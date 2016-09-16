@@ -134,7 +134,6 @@ bool circularBuffer::pop(char * msg, size_t & length)
 {
 	if (varBuff->clientCounter == 0)
 	{
-		//printf("gTailPos: %d lTailPos: %d headPos: %d freeMem: %d \n", varBuff->tailPos, lTail, varBuff->headPos, varBuff->freeMem);
 		//If the head has catched up to the tail
 		if (lTail == varBuff->headPos && varBuff->freeMem == 0)
 		{
@@ -171,11 +170,9 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	*length = readMsg->length - sizeof(sMsgHeader);
 
 	//printf("msgID %d	", readMsg->id);
-
 	char* yolo = (char*)readMsg;
 	yolo += sizeof(sMsgHeader);
 	memcpy(msg, yolo, *length);
-
 	printf("%d ", readMsg->id);
 	readMsg->consumerPile--;
 
@@ -229,6 +226,11 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		//newMsg->message = (char*)msg;
 		char* msgPointer = (char*)newMsg;
 		msgPointer += sizeof(sMsgHeader);
+
+		//printf("Now msg: %s\n", msg);
+		//printf("Now length: %d\n", length);
+		//printf("Now padding: %d\n", padding);
+
 		memcpy(msgPointer, msg, length);
 
 		/*newMsg->message = (char*)newMsg;
@@ -273,7 +275,9 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		newMsg->padding = padding;
 
 		char* msgPointer = (char*)newMsg;
-		msgPointer += (char)(sizeof(sMsgHeader));
+		msgPointer += sizeof(sMsgHeader);
+		//printf("Now msg: %s\n", msg);
+		//printf("Now length: %d\n", length);
 		memcpy(msgPointer, msg, length);
 
 		lHeadPos = totMsgLen;

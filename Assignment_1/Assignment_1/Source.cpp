@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
 	LPCWSTR msgBuffName = TEXT("MessageBuffer");
 	LPCWSTR varBuffName = TEXT("VarBuffer");
 
-	cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, 1111);
+	cirB.initCircBuffer(msgBuffName, fileMapSize, role, maxMsgSize, varBuffName, 1111);
 	//cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, 3);
 	//mut.lock();
 	if (role == PRODUCER)
@@ -92,6 +92,5 @@ int main(int argc, char* argv[]) {
 	//If you attempt to create the file map again you will only 
 	//get a handle to the already created FileMap
 	//CreateFileMapping()
-	cin.get();
 	return 0;
 }
