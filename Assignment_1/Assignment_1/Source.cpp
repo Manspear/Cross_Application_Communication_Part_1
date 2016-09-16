@@ -18,15 +18,6 @@ enum {
 };
 
 int main(int argc, char* argv[]) {
-	//argv[1]; producer || consumer
-	//argv[2]; delay in milliseconds
-	//argv[3]; Size of filemap in megabytes, NOT bytes
-	//argv[4]; number of messages to produce and consume. Use this to loop through the buffer
-	//argv[5]; random || msgSize random indicates that message size can vary. msgSize indicates that all messages be of same size
-	//convert FileMap-size to bytes
-	//Count = "number of 256 byte steps" inside of that memory space.
-	//Count is shared between processes. Head keeps track of the current "Count-step" it's on
-	//Tail only makes sure that it doesn't read from the same Count-step as the head
 	int delay = atoi(argv[2]);
 	size_t fileMapSize = atoi(argv[3]); 
 	fileMapSize = fileMapSize << 20; //converts to bytes
@@ -67,30 +58,18 @@ int main(int argc, char* argv[]) {
 	LPCWSTR msgBuffName = TEXT("MessageBuffer");
 	LPCWSTR varBuffName = TEXT("VarBuffer");
 
-	cirB.initCircBuffer(msgBuffName, fileMapSize, role, maxMsgSize, varBuffName, 1111);
-	//cirB.initCircBuffer(msgBuffName, fileMapSize, role, CHUNKSIZE, varBuffName, 3);
-	//mut.lock();
+	cirB.initCircBuffer(msgBuffName, fileMapSize, role, maxMsgSize, varBuffName);
+	int chunkSize = 256;
 	if (role == PRODUCER)
 	{
-		int chunkSize = 256;
 		Producer producer = Producer(delay, numMessages, maxMsgSize, msgSizeMode, fileMapSize, chunkSize, varBuffName);
 		producer.runProducer(cirB);
 	}
-	//mut.unlock();
-	//mut.lock();
 	if (role == CONSUMER)
 	{
-		//printf("Consumer Init\n");
-		//Sleep(500);
-		int chunkSize = 256;
 		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
 		consumer.runConsumer(cirB);
 	}
-	//mut.unlock();
-	//CreateFile(TEXT("Shared"), GENERIC_READ | GENERIC_WRITE, )
-	//The first time a specific FileMap is created, it is created. 
-	//If you attempt to create the file map again you will only 
-	//get a handle to the already created FileMap
-	//CreateFileMapping()
+
 	return 0;
 }

@@ -25,7 +25,6 @@ Consumer::Consumer(int & delay, int & numMessages, size_t & maxMsgSize, size_t &
 {
 	this->delay = delay;
 	this->requestedMessages = numMessages;
-	this->msgSizeMode = msgSizeMode;
 	this->maxMsgSize = maxMsgSize;
 	messageCount = 0;
 }

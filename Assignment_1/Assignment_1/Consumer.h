@@ -8,18 +8,10 @@
 class Consumer
 {
 private:
-	int localStep;
-	int localDiff;
-	int localOldDiff;
-	int memorySteps;
-
 	int delay;
 	int requestedMessages;
-	int msgSizeMode;
 	int maxMsgSize;
 	int messageCount;
-
-	int numMessages;
 
 public:
 	Consumer();

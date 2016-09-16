@@ -9,28 +9,29 @@
 class circularBuffer
 {
 private:
+	enum {
+		PRODUCER = 0,
+		CONSUMER = 1,
+		RANDOM = 0,
+		MSGSIZE = 1
+	};
+
 	const size_t * buffSize;
-	int role;
 	const size_t * chunkSize;
 
 	HANDLE msgFileMap;
-	char* msgBuff;
 	HANDLE varFileMap;
+	char* msgBuff;
 	sSharedVars* varBuff;
 	size_t clientCount;
 	size_t msgCounter;
-
 	size_t lTail;
-
 	Mutex mutex1;
-	
+
 	bool procMsg(char * msg, size_t * length);
 	bool pushMsg(bool reset, bool start, const void * msg, size_t & length);
 
 public:
-	size_t sharedMemSize;
-	size_t sleepTime;
-
 	/*
 	Creates the shared memory space for messages
 	role here is (for the moment) unneccesary
@@ -40,12 +41,10 @@ public:
 		const size_t& buffSize, 
 		const int& role,
 		const size_t& chunkSize, // round up messages to multiple of this.
-		LPCWSTR varBuffName, 
-		size_t numberOfClients
+		LPCWSTR varBuffName
 	);
 
 	void stopCircBuffer();
-
 	/*
 	push function used by the producer. The producer attempts to write data to the 
 	FileMap. Specifically it tries to write a message and append it to the Shared Memory (FileMap)

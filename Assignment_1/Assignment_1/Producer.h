@@ -15,21 +15,12 @@ private:
 		RANDOM = 0,
 		MSGSIZE = 1
 	};
-
-	int localStep;
-	int localDiff;
-	int localOldDiff;
-	int memorySteps;
-
 	int delay;
 	int requestedMessages;
 	int msgSizeMode;
 	int maxMsgSize;
 	int messageCount;
-
-	int numMessages;
-
-	int testID;
+	int messageID;
 
 public:
 	Producer();
