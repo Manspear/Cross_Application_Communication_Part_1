@@ -29,7 +29,7 @@ private:
 	Mutex mutex1;
 
 	bool procMsg(char * msg, size_t * length);
-	bool pushMsg(bool reset, bool start, const void * msg, size_t & length);
+	bool pushMsg(bool reset, bool start, const void * msg, size_t & length, size_t& padding, size_t& totMsgLength);
 
 public:
 	/*
