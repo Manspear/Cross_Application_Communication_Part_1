@@ -120,7 +120,7 @@ bool circularBuffer::pop(char * msg, size_t & length)
 		//If the head has catched up to the tail
 		if (lTail == varBuff->headPos && varBuff->freeMem == 0)
 		{
-			printf("NOTHING HAPPENS ONE!\n");
+			//printf("NOTHING HAPPENS ONE!\n");
 			mutex1.lock();
 			bool res = procMsg(msg, &length);
 			mutex1.unlock();
@@ -134,7 +134,7 @@ bool circularBuffer::pop(char * msg, size_t & length)
 			mutex1.unlock();
 			return res;
 		}
-		printf("lTail: %d gTail: %d!\n"), lTail, varBuff->tailPos;
+		//printf("lTail: %d gTail: %d!\n"), lTail, varBuff->tailPos;
 
 	}
 	return false;
@@ -152,7 +152,7 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	if (readMsg->id == -1)
 	{
 		//GETS STUCK HERE ONCE
-		printf("ID\n");
+		//printf("ID\n");
 		dummyMessage = true;
 		readMsg->consumerPile--;
 
@@ -164,7 +164,7 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	}
 	else
 	{
-		printf("NORMAL\n");
+		//printf("NORMAL\n");
 		*length = readMsg->length - sizeof(sMsgHeader);
 		tempCast += sizeof(sMsgHeader);
 		memcpy(msg, tempCast, *length);

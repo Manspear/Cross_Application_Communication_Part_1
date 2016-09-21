@@ -36,7 +36,7 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 
 void Producer::runProducer(circularBuffer& buffInst)
 {
-	printf("Producer!\n");
+	//printf("Producer!\n");
 	char* msg;
 	int messageLength;
 	msg = new char[maxMsgSize];
