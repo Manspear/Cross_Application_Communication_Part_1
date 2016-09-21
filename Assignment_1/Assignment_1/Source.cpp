@@ -20,7 +20,7 @@ enum {
 int main(int argc, char* argv[]) {
 	int delay = atoi(argv[2]);
 	size_t fileMapSize = atoi(argv[3]); 
-	//fileMapSize = fileMapSize << 20; //converts to bytes
+	fileMapSize = fileMapSize << 20; //converts to bytes
 	int numMessages = atoi(argv[4]);
 	int role;
 	int msgSizeMode;

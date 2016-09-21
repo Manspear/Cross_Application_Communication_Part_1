@@ -95,7 +95,7 @@ bool circularBuffer::push(const void * msg, size_t length)
 	if (varBuff->clientCounter == 0)
 	{
 		//size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
-		size_t padding = (length + sizeof(sMsgHeader)) % *const_cast<size_t*>(chunkSize);
+		size_t padding = *const_cast<size_t*>(chunkSize) - (length + sizeof(sMsgHeader)) % *const_cast<size_t*>(chunkSize);
 		size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
 		size_t buffHeadDiff = *buffSize - varBuff->headPos;
 		//if there's enough space for the message
