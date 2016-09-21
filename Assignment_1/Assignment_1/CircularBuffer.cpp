@@ -138,16 +138,23 @@ bool circularBuffer::pop(char * msg, size_t & length)
 
 bool circularBuffer::procMsg(char * msg, size_t * length)
 {
-	char* tempCast = (char*)msgBuff;
+	char* tempCast = msgBuff;
 	tempCast += lTail;
 	sMsgHeader* readMsg = (sMsgHeader*)tempCast;
+	//When length is zero: i.e when the buffer resets (reading dummy message) length becomes negative, which a size_t can't handle.
+	//When we read a dummy message... Read the first message instead.
+	if (readMsg->id == -1)
+	{
+		readMsg->consumerPile--;
+		readMsg = (sMsgHeader*)msgBuff;
+		tempCast = msgBuff;
+		lTail = readMsg->length + readMsg->padding;
+	}
 	*length = readMsg->length - sizeof(sMsgHeader);
-
 	tempCast += sizeof(sMsgHeader);
 	memcpy(msg, tempCast, *length);
 	printf("%d ", readMsg->id);
 	readMsg->consumerPile--;
-
 	if (readMsg->consumerPile == 0)
 	{
 		varBuff->freeMem += readMsg->length + readMsg->padding;
@@ -217,10 +224,10 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		tempCast += lHeadPos;
 		newMsg = (sMsgHeader*)tempCast;
 		newMsg->consumerPile = clientCount;
-		newMsg->id = msgCounter;
-		msgCounter++;
+		newMsg->id = -1;
+		//msgCounter++;
 		
-		newMsg->length = 0;
+		newMsg->length = sizeof(sMsgHeader);
 		newMsg->padding = (*buffSize - lHeadPos) - sizeof(sMsgHeader);
 		
 		varBuff->freeMem -= sizeof(sMsgHeader) + newMsg->padding;

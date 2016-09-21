@@ -57,13 +57,15 @@ int main(int argc, char* argv[]) {
 	circularBuffer cirB;
 	LPCWSTR msgBuffName = TEXT("MessageBuffer");
 	LPCWSTR varBuffName = TEXT("VarBuffer");
-
-	cirB.initCircBuffer(msgBuffName, fileMapSize, role, maxMsgSize, varBuffName);
 	int chunkSize = 256;
+	cirB.initCircBuffer(msgBuffName, fileMapSize, role, chunkSize, varBuffName);
+	
 	if (role == PRODUCER)
 	{
 		Producer producer = Producer(delay, numMessages, maxMsgSize, msgSizeMode, fileMapSize, chunkSize, varBuffName);
 		producer.runProducer(cirB);
+		//Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
+		//consumer.runConsumer(cirB);
 	}
 	if (role == CONSUMER)
 	{
