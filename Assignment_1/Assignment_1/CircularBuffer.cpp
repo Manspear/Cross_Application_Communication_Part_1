@@ -141,20 +141,26 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	char* tempCast = msgBuff;
 	tempCast += lTail;
 	sMsgHeader* readMsg = (sMsgHeader*)tempCast;
+	bool dummyMessage = false;
 	//When length is zero: i.e when the buffer resets (reading dummy message) length becomes negative, which a size_t can't handle.
-	//When we read a dummy message... Read the first message instead.
+	//When we read a dummy message... Read the first message instead. Or... don't. return false instead.
+	//The reader is able to read the same message several times...
 	if (readMsg->id == -1)
 	{
+		dummyMessage = true;
 		readMsg->consumerPile--;
-		readMsg = (sMsgHeader*)msgBuff;
-		tempCast = msgBuff;
-		lTail = readMsg->length + readMsg->padding;
+		
+		if(varBuff->freeMem > 0)
+			lTail = 0;
 	}
-	*length = readMsg->length - sizeof(sMsgHeader);
-	tempCast += sizeof(sMsgHeader);
-	memcpy(msg, tempCast, *length);
-	printf("%d ", readMsg->id);
-	readMsg->consumerPile--;
+	else
+	{
+		*length = readMsg->length - sizeof(sMsgHeader);
+		tempCast += sizeof(sMsgHeader);
+		memcpy(msg, tempCast, *length);
+		printf("%d ", readMsg->id);
+		readMsg->consumerPile--;
+	}
 	if (readMsg->consumerPile == 0)
 	{
 		varBuff->freeMem += readMsg->length + readMsg->padding;
@@ -171,17 +177,24 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 		}
 	}
 	//If the tail jumps to the end of the buffer
-	size_t nextTailPos = (size_t)(lTail + readMsg->length + readMsg->padding);
-	if (nextTailPos >= *buffSize)
+	if (dummyMessage)
 	{
-		lTail = 0;
-		return true;
+		return false;
 	}
-	//if the tail jump is within the buffer
-	else if ((nextTailPos <= *buffSize))
+	else
 	{
-		lTail += readMsg->length + readMsg->padding;
-		return true;
+		size_t nextTailPos = (size_t)(lTail + readMsg->length + readMsg->padding);
+		if (nextTailPos >= *buffSize && !dummyMessage)
+		{
+			lTail = 0;
+			return true;
+		}
+		//if the tail jump is within the buffer
+		else if ((nextTailPos <= *buffSize) && !dummyMessage)
+		{
+			lTail += readMsg->length + readMsg->padding;
+			return true;
+		}
 	}
 	return true;
 }
