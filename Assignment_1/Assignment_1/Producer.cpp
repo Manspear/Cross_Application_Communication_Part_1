@@ -36,6 +36,7 @@ void Producer::makeMessage(char* msg, size_t msgLen)
 
 void Producer::runProducer(circularBuffer& buffInst)
 {
+	printf("Producer!\n");
 	char* msg;
 	int messageLength;
 	msg = new char[maxMsgSize];
@@ -44,11 +45,14 @@ void Producer::runProducer(circularBuffer& buffInst)
 	while (messageCount < requestedMessages)
 	{
 		if (msgSizeMode == RANDOM)
-			messageLength = rand() % (maxMsgSize - sizeof(sMsgHeader));
-
+		{ //MessageLength is here a value between 0 and MESSAGE-size (not including header)
+			messageLength = 2 + (rand() % (maxMsgSize - sizeof(sMsgHeader)-2));
+		}
 		makeMessage(msg, messageLength);
 		while (!buffInst.push(msg, messageLength))
+		{
 			Sleep(delay);
+		}
 
 		printf("%d %s\n", messageCount, msg);
 		messageCount++;

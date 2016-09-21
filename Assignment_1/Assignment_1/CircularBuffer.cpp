@@ -95,7 +95,7 @@ bool circularBuffer::push(const void * msg, size_t length)
 	if (varBuff->clientCounter == 0)
 	{
 		//size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
-		size_t padding = *const_cast<size_t*>(chunkSize) - (length + sizeof(sMsgHeader)) % *const_cast<size_t*>(chunkSize);
+		size_t padding = *const_cast<size_t*>(chunkSize) - ((length + sizeof(sMsgHeader)) % *const_cast<size_t*>(chunkSize));
 		size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
 		size_t buffHeadDiff = *buffSize - varBuff->headPos;
 		//if there's enough space for the message
@@ -116,9 +116,11 @@ bool circularBuffer::pop(char * msg, size_t & length)
 {
 	if (varBuff->clientCounter == 0)
 	{
+		
 		//If the head has catched up to the tail
 		if (lTail == varBuff->headPos && varBuff->freeMem == 0)
 		{
+			printf("NOTHING HAPPENS ONE!\n");
 			mutex1.lock();
 			bool res = procMsg(msg, &length);
 			mutex1.unlock();
@@ -132,6 +134,8 @@ bool circularBuffer::pop(char * msg, size_t & length)
 			mutex1.unlock();
 			return res;
 		}
+		printf("lTail: %d gTail: %d!\n"), lTail, varBuff->tailPos;
+
 	}
 	return false;
 }
@@ -147,14 +151,20 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	//The reader is able to read the same message several times...
 	if (readMsg->id == -1)
 	{
+		//GETS STUCK HERE ONCE
+		printf("ID\n");
 		dummyMessage = true;
 		readMsg->consumerPile--;
-		
-		if(varBuff->freeMem > 0)
-			lTail = 0;
+
+		lTail = 0;
+		//lTail = 0... Shouldn't this always work? HeadPos only moves when the head is done with it's message, and tail only moves if it's != head
+		//head gets stuck here since there might be some freeMem at the start, but not enough...
+		//if(varBuff->freeMem > 0)
+		//	lTail = 0;
 	}
 	else
 	{
+		printf("NORMAL\n");
 		*length = readMsg->length - sizeof(sMsgHeader);
 		tempCast += sizeof(sMsgHeader);
 		memcpy(msg, tempCast, *length);

@@ -15,12 +15,12 @@ private:
 		RANDOM = 0,
 		MSGSIZE = 1
 	};
-	int delay;
-	int requestedMessages;
-	int msgSizeMode;
-	int maxMsgSize;
-	int messageCount;
-	int messageID;
+	size_t delay;
+	size_t requestedMessages;
+	size_t msgSizeMode;
+	size_t maxMsgSize;
+	size_t messageCount;
+	size_t messageID;
 
 public:
 	Producer();

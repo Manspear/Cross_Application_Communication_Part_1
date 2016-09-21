@@ -20,11 +20,12 @@ enum {
 int main(int argc, char* argv[]) {
 	int delay = atoi(argv[2]);
 	size_t fileMapSize = atoi(argv[3]); 
-	fileMapSize = fileMapSize << 20; //converts to bytes
+	//fileMapSize = fileMapSize << 20; //converts to bytes
 	int numMessages = atoi(argv[4]);
 	int role;
 	int msgSizeMode;
-	size_t maxMsgSize = fileMapSize / 4;
+	size_t four = 4;
+	size_t maxMsgSize = fileMapSize / four;
 	//check if this executable is a producer or a consumer
 	if (strcmp("producer", argv[1]) == 0)
 	{
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]) {
 	{
 		msgSizeMode = RANDOM;
 	}
-	else if (atoi(argv[5]) <= (size_t)(fileMapSize / 4))
+	else if (atoi(argv[5]) <= (fileMapSize / four))
 	{
 		msgSizeMode = MSGSIZE;
 		maxMsgSize = atoi(argv[5]);
@@ -64,14 +65,12 @@ int main(int argc, char* argv[]) {
 	{
 		Producer producer = Producer(delay, numMessages, maxMsgSize, msgSizeMode, fileMapSize, chunkSize, varBuffName);
 		producer.runProducer(cirB);
-		//Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
-		//consumer.runConsumer(cirB);
 	}
 	if (role == CONSUMER)
 	{
 		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
 		consumer.runConsumer(cirB);
 	}
-
+	cin.get();
 	return 0;
 }
