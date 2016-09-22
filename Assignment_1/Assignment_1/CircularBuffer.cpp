@@ -265,10 +265,12 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 
 		
 		lHeadPos += totMsgLength;
+		mutex1.lock();
 		varBuff->headPos = lHeadPos;
+		mutex1.unlock();
 		varBuff->freeMem -= totMsgLength;
 
-		if (varBuff->headPos == *buffSize)
+		if (varBuff->headPos >= *buffSize)
 			varBuff->headPos = 0;
 		return true;
 	}
@@ -302,7 +304,9 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		memcpy(msgPointer, msg, length);
 
 		lHeadPos += totMsgLength;
+		mutex1.lock();
 		varBuff->headPos = lHeadPos;
+		mutex1.unlock();
 		varBuff->freeMem -= newMsg->length + newMsg->padding;
 
 		return true;
