@@ -7,7 +7,6 @@ void Consumer::runConsumer(circularBuffer& buffInst)
 	while (messageCount < requestedMessages)
 	{
 		size_t length;
-		Sleep(delay);
 		while (!buffInst.pop(msg, length))
 		{
 			Sleep(delay);

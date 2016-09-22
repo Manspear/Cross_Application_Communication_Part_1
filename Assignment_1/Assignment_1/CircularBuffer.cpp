@@ -69,7 +69,7 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 			}
 			else
 				ticker++;
-			Sleep(100);
+			Sleep(300);
 		}
 		this->clientCount = varBuff->clientCounter;
 		varBuff->producerExist = true;
@@ -80,7 +80,7 @@ void circularBuffer::initCircBuffer(LPCWSTR msgBuffName, const size_t & buffSize
 		varBuff->clientCounter++;
 		while (varBuff->producerExist == false)
 		{
-			Sleep(50);
+			Sleep(300);
 		}
 		varBuff->clientCounter--;
 	}
@@ -92,52 +92,81 @@ void circularBuffer::stopCircBuffer()
 
 bool circularBuffer::push(const void * msg, size_t length)
 {
+	bool res = false;
 	if (varBuff->clientCounter == 0)
 	{
 		//size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
 		size_t padding = *const_cast<size_t*>(chunkSize) - ((length + sizeof(sMsgHeader)) % *const_cast<size_t*>(chunkSize));
 		size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
 		size_t buffHeadDiff = *buffSize - varBuff->headPos;
+
+		size_t freeSpaceEnd = -1;
+		size_t freeSpaceBegin = -1;
+
+		if (varBuff->headPos >= varBuff->tailPos)
+			freeSpaceEnd = (*buffSize - varBuff->headPos);
+		else
+			freeSpaceBegin = varBuff->tailPos - varBuff->headPos;
 		//if there's enough space for the message
 		if (varBuff->freeMem >= totMsgLen)
 		{
-			//if there's enough space at end of buffer
-			if(totMsgLen <= buffHeadDiff)
-				return pushMsg(false, false, msg, length, padding, totMsgLen);
-			//if there's enough space at start of buffer
-			if (varBuff->freeMem - buffHeadDiff >= totMsgLen)
-				return pushMsg(true, true, msg, length, padding, totMsgLen);
+			////if there's enough space at end of buffer
+			//if(totMsgLen <= buffHeadDiff)
+			//	return pushMsg(false, false, msg, length, padding, totMsgLen);
+			////if there's enough space at start of buffer
+			//if (varBuff->freeMem - buffHeadDiff >= totMsgLen)
+			//	return pushMsg(true, true, msg, length, padding, totMsgLen);
+
+			
+			//if there's enough space at end of buffer, and if head is in front of tail
+			if (varBuff->headPos >= varBuff->tailPos && (totMsgLen <= (*buffSize - varBuff->headPos)))
+			{
+				res = pushMsg(false, false, msg, length, padding, totMsgLen);
+			}else 
+			//if head is in front of tail, and if the space between tail and start of buffer is a fit for the msg
+			if (varBuff->headPos >= varBuff->tailPos && varBuff->tailPos >= totMsgLen)
+			{
+				res =  pushMsg(true, true, msg, length, padding, totMsgLen);
+			}
+			else
+			//if the head is behind the tail, the space between them is freeMem 
+			if (varBuff->headPos < varBuff->tailPos)
+			{
+				res = pushMsg(false, false, msg, length, padding, totMsgLen);
+			}
+			
+
+			//if (totMsgLen <= buffHeadDiff)
+			//	return pushMsg(false, false, msg, length, padding, totMsgLen);
+			////if there's enough space at start of buffer
+			//if (varBuff->freeMem - buffHeadDiff >= totMsgLen)
+			//	return pushMsg(true, true, msg, length, padding, totMsgLen);
 		}	
 	}
-	return false;
+	return res;
 }
 
 bool circularBuffer::pop(char * msg, size_t & length)
 {
+	bool res = false;
+	mutex1.lock();
 	if (varBuff->clientCounter == 0)
 	{
-		
 		//If the head has catched up to the tail
 		if (lTail == varBuff->headPos && varBuff->freeMem == 0)
 		{
 			//printf("NOTHING HAPPENS ONE!\n");
-			mutex1.lock();
-			bool res = procMsg(msg, &length);
-			mutex1.unlock();
-			return res;
+			res = procMsg(msg, &length);
 		}
-
-		if (lTail != varBuff->headPos)
+		//If the tail is chasing the head DID THIS IF DO SOMETHING???
+		else if (lTail != varBuff->headPos && varBuff->freeMem > 0)
 		{
-			mutex1.lock();
-			bool res = procMsg(msg, &length);
-			mutex1.unlock();
-			return res;
+			res = procMsg(msg, &length);
 		}
 		//printf("lTail: %d gTail: %d!\n"), lTail, varBuff->tailPos;
-
 	}
-	return false;
+	mutex1.unlock();
+	return res;
 }
 
 bool circularBuffer::procMsg(char * msg, size_t * length)
@@ -151,16 +180,9 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	//The reader is able to read the same message several times...
 	if (readMsg->id == -1)
 	{
-		//GETS STUCK HERE ONCE
-		//printf("ID\n");
 		dummyMessage = true;
 		readMsg->consumerPile--;
-
 		lTail = 0;
-		//lTail = 0... Shouldn't this always work? HeadPos only moves when the head is done with it's message, and tail only moves if it's != head
-		//head gets stuck here since there might be some freeMem at the start, but not enough...
-		//if(varBuff->freeMem > 0)
-		//	lTail = 0;
 	}
 	else
 	{
@@ -175,15 +197,18 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	{
 		varBuff->freeMem += readMsg->length + readMsg->padding;
 
-		if ((size_t)(varBuff->tailPos + readMsg->length + readMsg->padding) >= *buffSize)
-		{
-			//printf("Tail to start\n");
-			varBuff->tailPos = 0;
-		}
-		else
+		size_t nextPos = varBuff->tailPos + readMsg->length + readMsg->padding;
+		
+
+		if(nextPos % *buffSize > 0)
 		{
 			//printf("Tail to forward\n");
 			varBuff->tailPos += readMsg->length + readMsg->padding;
+		}
+		if (nextPos % *buffSize == 0)
+		{
+			//printf("Tail to start\n");
+			varBuff->tailPos = 0;
 		}
 	}
 	//If the tail jumps to the end of the buffer
@@ -193,14 +218,20 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	}
 	else
 	{
-		size_t nextTailPos = (size_t)(lTail + readMsg->length + readMsg->padding);
-		if (nextTailPos >= *buffSize && !dummyMessage)
+		size_t nextTailPos = lTail + readMsg->length + readMsg->padding;
+		//bool testor = false;
+		//while (!testor)
+		//{
+		//	if (varBuff->headPos != 0)
+		//		testor = true;
+		//}
+		if (nextTailPos % *buffSize == 0)
 		{
 			lTail = 0;
 			return true;
 		}
 		//if the tail jump is within the buffer
-		else if ((nextTailPos <= *buffSize) && !dummyMessage)
+		else
 		{
 			lTail += readMsg->length + readMsg->padding;
 			return true;

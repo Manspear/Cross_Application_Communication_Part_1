@@ -9,6 +9,7 @@
 #include <time.h> //use time as a kernel for the rand() function. 
 #define CHUNKSIZE 256
 //#define NUMCLIENTS 5
+//Sometimes program gets stuck in an infinite loop somewhere. 
 using namespace std;
 enum {
 	PRODUCER = 0,
@@ -54,7 +55,6 @@ int main(int argc, char* argv[]) {
 		OutputDebugString(error);
 		return 0;
 	}
-
 	circularBuffer cirB;
 	LPCWSTR msgBuffName = TEXT("MessageBuffer");
 	LPCWSTR varBuffName = TEXT("VarBuffer");
@@ -73,6 +73,5 @@ int main(int argc, char* argv[]) {
 		consumer.runConsumer(cirB);
 		//printf("CONSUMER DONE!");
 	}
-	cin.get();
 	return 0;
 }
