@@ -95,29 +95,11 @@ bool circularBuffer::push(const void * msg, size_t length)
 	bool res = false;
 	if (varBuff->clientCounter == 0)
 	{
-		//size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
 		size_t padding = *const_cast<size_t*>(chunkSize) - ((length + sizeof(sMsgHeader)) % *const_cast<size_t*>(chunkSize));
 		size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
-		size_t buffHeadDiff = *buffSize - varBuff->headPos;
-
-		size_t freeSpaceEnd = -1;
-		size_t freeSpaceBegin = -1;
-
-		if (varBuff->headPos >= varBuff->tailPos)
-			freeSpaceEnd = (*buffSize - varBuff->headPos);
-		else
-			freeSpaceBegin = varBuff->tailPos - varBuff->headPos;
 		//if there's enough space for the message
 		if (varBuff->freeMem >= totMsgLen)
 		{
-			////if there's enough space at end of buffer
-			//if(totMsgLen <= buffHeadDiff)
-			//	return pushMsg(false, false, msg, length, padding, totMsgLen);
-			////if there's enough space at start of buffer
-			//if (varBuff->freeMem - buffHeadDiff >= totMsgLen)
-			//	return pushMsg(true, true, msg, length, padding, totMsgLen);
-
-			
 			//if there's enough space at end of buffer, and if head is in front of tail
 			if (varBuff->headPos >= varBuff->tailPos && (totMsgLen <= (*buffSize - varBuff->headPos)))
 			{
@@ -134,13 +116,6 @@ bool circularBuffer::push(const void * msg, size_t length)
 			{
 				res = pushMsg(false, false, msg, length, padding, totMsgLen);
 			}
-			
-
-			//if (totMsgLen <= buffHeadDiff)
-			//	return pushMsg(false, false, msg, length, padding, totMsgLen);
-			////if there's enough space at start of buffer
-			//if (varBuff->freeMem - buffHeadDiff >= totMsgLen)
-			//	return pushMsg(true, true, msg, length, padding, totMsgLen);
 		}	
 	}
 	return res;
@@ -152,18 +127,14 @@ bool circularBuffer::pop(char * msg, size_t & length)
 	mutex1.lock();
 	if (varBuff->clientCounter == 0)
 	{
-		//If the head has catched up to the tail
 		if (lTail == varBuff->headPos && varBuff->freeMem == 0)
 		{
-			//printf("NOTHING HAPPENS ONE!\n");
 			res = procMsg(msg, &length);
 		}
-		//If the tail is chasing the head DID THIS IF DO SOMETHING???
 		else if (lTail != varBuff->headPos && varBuff->freeMem > 0)
 		{
 			res = procMsg(msg, &length);
 		}
-		//printf("lTail: %d gTail: %d!\n"), lTail, varBuff->tailPos;
 	}
 	mutex1.unlock();
 	return res;
@@ -175,9 +146,6 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	tempCast += lTail;
 	sMsgHeader* readMsg = (sMsgHeader*)tempCast;
 	bool dummyMessage = false;
-	//When length is zero: i.e when the buffer resets (reading dummy message) length becomes negative, which a size_t can't handle.
-	//When we read a dummy message... Read the first message instead. Or... don't. return false instead.
-	//The reader is able to read the same message several times...
 	if (readMsg->id == -1)
 	{
 		dummyMessage = true;
@@ -186,7 +154,6 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	}
 	else
 	{
-		//printf("NORMAL\n");
 		*length = readMsg->length - sizeof(sMsgHeader);
 		tempCast += sizeof(sMsgHeader);
 		memcpy(msg, tempCast, *length);
@@ -202,12 +169,10 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 
 		if(nextPos % *buffSize > 0)
 		{
-			//printf("Tail to forward\n");
 			varBuff->tailPos += readMsg->length + readMsg->padding;
 		}
 		if (nextPos % *buffSize == 0)
 		{
-			//printf("Tail to start\n");
 			varBuff->tailPos = 0;
 		}
 	}
@@ -219,12 +184,6 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 	else
 	{
 		size_t nextTailPos = lTail + readMsg->length + readMsg->padding;
-		//bool testor = false;
-		//while (!testor)
-		//{
-		//	if (varBuff->headPos != 0)
-		//		testor = true;
-		//}
 		if (nextTailPos % *buffSize == 0)
 		{
 			lTail = 0;
@@ -242,8 +201,6 @@ bool circularBuffer::procMsg(char * msg, size_t * length)
 
 bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & length, size_t& padding, size_t& totMsgLength)
 {
-	//size_t padding = *const_cast<size_t*>(chunkSize) - length - sizeof(sMsgHeader);
-	//size_t totMsgLen = sizeof(sMsgHeader) + length + padding;
 	sMsgHeader* newMsg = (sMsgHeader*)msgBuff;
 
 	size_t lHeadPos = varBuff->headPos;
@@ -265,9 +222,9 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 
 		
 		lHeadPos += totMsgLength;
-		mutex1.lock();
+		//mutex1.lock();
 		varBuff->headPos = lHeadPos;
-		mutex1.unlock();
+		//mutex1.unlock();
 		varBuff->freeMem -= totMsgLength;
 
 		if (varBuff->headPos >= *buffSize)
@@ -281,7 +238,6 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		newMsg = (sMsgHeader*)tempCast;
 		newMsg->consumerPile = clientCount;
 		newMsg->id = -1;
-		//msgCounter++;
 		
 		newMsg->length = sizeof(sMsgHeader);
 		newMsg->padding = (*buffSize - lHeadPos) - sizeof(sMsgHeader);
@@ -291,7 +247,6 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		newMsg = (sMsgHeader*)msgBuff;
 		lHeadPos = 0;
 
-		//SAME
 		//Make a message at the start
 		newMsg->consumerPile = clientCount;
 		newMsg->id = msgCounter;
@@ -304,9 +259,9 @@ bool circularBuffer::pushMsg(bool reset, bool start, const void * msg, size_t & 
 		memcpy(msgPointer, msg, length);
 
 		lHeadPos += totMsgLength;
-		mutex1.lock();
+		//mutex1.lock();
 		varBuff->headPos = lHeadPos;
-		mutex1.unlock();
+		//mutex1.unlock();
 		varBuff->freeMem -= newMsg->length + newMsg->padding;
 
 		return true;

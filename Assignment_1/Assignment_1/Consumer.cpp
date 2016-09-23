@@ -2,17 +2,16 @@
 
 void Consumer::runConsumer(circularBuffer& buffInst)
 {
-	//printf("Consumer!\n");
 	char* msg = new char[maxMsgSize];
 	while (messageCount < requestedMessages)
 	{
 		size_t length;
+		Sleep(delay);
 		while (!buffInst.pop(msg, length))
 		{
-			Sleep(delay);
+			Sleep(1);
 		}
 		printf("%s\n", msg);
-		//printf("Msg above\n");
 		messageCount++;
 	}
 }

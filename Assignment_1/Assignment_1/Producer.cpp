@@ -49,9 +49,11 @@ void Producer::runProducer(circularBuffer& buffInst)
 			messageLength = 2 + (rand() % (maxMsgSize - sizeof(sMsgHeader)-2));
 		}
 		makeMessage(msg, messageLength);
+
+		Sleep(delay);
 		while (!buffInst.push(msg, messageLength))
 		{
-			Sleep(delay);
+			Sleep(1);
 		}
 
 		printf("%d %s\n", messageCount, msg);

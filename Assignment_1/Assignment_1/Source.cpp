@@ -65,13 +65,11 @@ int main(int argc, char* argv[]) {
 	{
 		Producer producer = Producer(delay, numMessages, maxMsgSize, msgSizeMode, fileMapSize, chunkSize, varBuffName);
 		producer.runProducer(cirB);
-		//printf("PRODUCER DONE!");
 	}
 	if (role == CONSUMER)
 	{
 		Consumer consumer = Consumer(delay, numMessages, maxMsgSize, fileMapSize, chunkSize, varBuffName);
 		consumer.runConsumer(cirB);
-		//printf("CONSUMER DONE!");
 	}
 	return 0;
 }
